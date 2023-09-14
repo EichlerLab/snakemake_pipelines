@@ -16,7 +16,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: env_CI
-          environment-file: ../.github/workflows/env_CI.yml
+          environment-file: .github/env_CI.yml
           auto-activate-base: false
       - run: |
           conda info
