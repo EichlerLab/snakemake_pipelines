@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install pybedtools
+        run: |
+          conda install --channel conda-forge --channel bioconda pybedtools
       - name: Snakemake dry run for vcf_merge
         uses: snakemake/snakemake-github-action@v1.25.1
         with:
