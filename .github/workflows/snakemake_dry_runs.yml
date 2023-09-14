@@ -17,5 +17,5 @@ jobs:
         uses: snakemake/snakemake-github-action@v1.25.1
         with:
           directory: general_pipelines/workflows/vcf_merge
-          snakefile: Snakefile
+          snakefile: general_pipelines/workflows/vcf_merge/Snakefile
           args: "-n --cores 1"
