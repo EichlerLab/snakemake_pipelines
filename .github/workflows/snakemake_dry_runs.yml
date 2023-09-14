@@ -18,4 +18,4 @@ jobs:
         with:
           directory: general_pipelines/workflows/vcf_merge
           snakefile: general_pipelines/workflows/vcf_merge/Snakefile
-          args: "-n --cores 1"
+          args: "-n --cores 1 --use-conda --conda-cleanup-pkgs cache"
