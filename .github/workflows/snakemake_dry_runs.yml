@@ -21,6 +21,9 @@ jobs:
       - run: |
           conda info
           conda list
+          conda install --name env_CI pybedtools
+          conda activate env_CI
+          conda env list
 
       - name: Snakemake dry run for vcf_merge
         uses: snakemake/snakemake-github-action@v1.25.1
