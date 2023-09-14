@@ -1,0 +1,252 @@
+import pandas as pd
+from pybedtools import BedTool
+import gzip
+import shutil
+
+
+configfile: "config/config.yaml"
+
+
+MANIFEST = config.get("MANIFEST", "config/manifest.tab")
+REF = config["REF"]
+
+manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="SAMPLE")
+
+
+def find_vcf(wildcards):
+    return manifest_df["VCF"].unique()
+
+
+def call_bed_h1(wildcards):
+    return manifest_df.at[wildcards.sample, "CALLABLE_H1"]
+
+
+def call_bed_h2(wildcards):
+    return manifest_df.at[wildcards.sample, "CALLABLE_H2"]
+
+
+def find_uid(wildcards):
+    return manifest_df.at[wildcards.sample, "UID"]
+
+
+def agg_gt(wildcards):
+    return expand(rules.bgzip_indiv.output.gt, sample=manifest_df.index)
+
+
+def clean_hap_mem(wildcards, attempt):
+    return attempt * 64
+
+
+def find_first_vcf(wildcards):
+    return manifest_df["VCF"].unique()[0]
+
+
+localrules:
+    all,
+    make_header,
+
+
+rule all:
+    input:
+        "vcf/norm/merged_gt.vcf.gz",
+
+
+rule merge_base_vcf:
+    input:
+        vcf=find_vcf,
+    output:
+        vcf=temp("vcf/raw/all.vcf"),
+    threads: 1
+    resources:
+        mem=8,
+        hrs=24,
+    envmodules:
+        "modules",
+        "modules-init",
+        "modules-gs/prod",
+        "modules-eichler/prod",
+        "bcftools/1.12",
+    shell:
+        """
+        bcftools merge -m none -O v {input.vcf} | grep -v "##" > {output.vcf}
+        """
+
+
+rule make_header:
+    input:
+        vcf=find_first_vcf,
+    output:
+        header=temp("header.out"),
+    run:
+        if input.vcf.endswith("gz"):
+            file_handle = gzip.open(input.vcf, "rt")
+        else:
+            file_handle = open(input.vcf, "r")
+        with open(output.header, "w") as outfile:
+            with file_handle as infile:
+                for line in infile:
+                    if line.startswith("##"):
+                        outfile.write(line)
+                    else:
+                        break
+
+
+rule clean_hap:
+    input:
+        vcf=rules.merge_base_vcf.output.vcf,
+        call_bed_h1=call_bed_h1,
+        call_bed_h2=call_bed_h2,
+        ref_fai=REF + ".fai",
+        header=rules.make_header.output.header,
+    output:
+        gt=temp("vcf/gt/per_sample/{sample}.vcf"),
+    params:
+        uid=find_uid,
+    threads: 1
+    resources:
+        mem=clean_hap_mem,
+        hrs=10,
+    run:
+        shutil.copy(input.header, output.gt)
+        h1 = BedTool(input.call_bed_h1).sort(g=input.ref_fai)
+        h2 = BedTool(input.call_bed_h2).sort(g=input.ref_fai)
+        df = pd.read_csv(
+            input.vcf,
+            sep="\t",
+            usecols=[
+                "#CHROM",
+                "POS",
+                "ID",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "FORMAT",
+                f"{wildcards.sample}",
+            ],
+        ).drop_duplicates()
+        out_df = df.loc[df[f"{wildcards.sample}"] != "./."].copy()
+        check_df = df.loc[df[f"{wildcards.sample}"] == "./."].copy()
+        hap1_int = (
+            BedTool.from_dataframe(
+                check_df[["#CHROM", "POS", "POS", "ID", "REF", "ALT"]]
+            )
+            .sort(g=input.ref_fai)
+            .intersect(h1, sorted=True, g=input.ref_fai)
+            .to_dataframe(
+                usecols=[0, 1, 3, 4, 5], names=["#CHROM", "POS", "ID", "REF", "ALT"]
+            )
+            .drop_duplicates()
+        )
+        hap1_int["h1"] = "0"
+        hap2_int = (
+            BedTool.from_dataframe(
+                check_df[["#CHROM", "POS", "POS", "ID", "REF", "ALT"]]
+            )
+            .sort(g=input.ref_fai)
+            .intersect(h2, sorted=True, g=input.ref_fai)
+            .to_dataframe(
+                usecols=[0, 1, 3, 4, 5], names=["#CHROM", "POS", "ID", "REF", "ALT"]
+            )
+            .drop_duplicates()
+        )
+        hap2_int["h2"] = "0"
+        if len(hap1_int) != 0:
+            check_df = check_df.merge(hap1_int, how="left")
+        else:
+            check_df["h1"] = "."
+        if len(hap2_int) != 0:
+            check_df = check_df.merge(hap2_int, how="left")
+        else:
+            check_df["h2"] = "."
+        check_df["h1"] = check_df["h1"].fillna(".")
+        check_df["h2"] = check_df["h2"].fillna(".")
+        check_df[f"{wildcards.sample}"] = check_df["h1"] + "|" + check_df["h2"]
+        out_df = out_df.append(check_df).sort_values(["#CHROM", "POS"])
+        out_df = out_df.rename(columns={wildcards.sample: params.uid})
+        out_df["ALT"] = out_df["ALT"].str.upper().fillna("NA")
+        out_df["REF"] = out_df["REF"].str.upper().fillna("NA")
+        out_df[
+            [
+                "#CHROM",
+                "POS",
+                "ID",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "FORMAT",
+                f"{params.uid}",
+            ]
+        ].to_csv(output.gt, sep="\t", index=False, mode="a")
+
+
+rule bgzip_indiv:
+    input:
+        gt=rules.clean_hap.output.gt,
+    output:
+        gt=temp("vcf/gt/per_sample/{sample}.vcf.gz"),
+    threads: 1
+    resources:
+        mem=8,
+        hrs=24,
+    envmodules:
+        "modules",
+        "modules-init",
+        "modules-gs/prod",
+        "modules-eichler/prod",
+        "htslib/1.12",
+    shell:
+        """
+        bgzip -c {input.gt} > {output.gt}
+        sleep 2m && tabix -p vcf {output.gt}
+        """
+
+
+rule merge_clean_hap:
+    input:
+        vcf=agg_gt,
+    output:
+        vcf=temp("vcf/gt/merged_gt.vcf.gz"),
+    threads: 1
+    resources:
+        mem=clean_hap_mem,
+        hrs=96,
+    envmodules:
+        "modules",
+        "modules-init",
+        "modules-gs/prod",
+        "modules-eichler/prod",
+        "htslib/1.12",
+        "bcftools/1.12",
+    shell:
+        """
+        bcftools merge -m none -O z {input.vcf} | bcftools sort -O z -o {output.vcf}
+        sleep 2m && tabix -f -p vcf {output.vcf}
+        """
+
+
+rule check_vcf:
+    input:
+        vcf=rules.merge_clean_hap.output.vcf,
+        ref=REF,
+    output:
+        normed_vcf="vcf/norm/merged_gt.vcf.gz",
+    threads: 1
+    resources:
+        mem=clean_hap_mem,
+        hrs=10,
+    envmodules:
+        "modules",
+        "modules-init",
+        "modules-gs/prod",
+        "modules-eichler/prod",
+        "htslib/1.12",
+        "bcftools/1.12",
+    shell:
+        """
+        bcftools norm --fasta-ref {input.ref} {input.vcf} -O z | bcftools sort -O z -o {output.normed_vcf}
+        sleep 2m && tabix -f -p vcf {output.normed_vcf}
+        """
