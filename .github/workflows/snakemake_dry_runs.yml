@@ -1,0 +1,21 @@
+name: snakemake-dry-runs
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  snakemake-dry-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Snakemake dry run for vcf_merge
+        uses: snakemake/snakemake-github-action@v1.25.1
+        with:
+          directory: general_pipelines/workflows/vcf_merge
+          snakefile: Snakefile
+          args: "-n --cores 1"
