@@ -14,4 +14,4 @@ jobs:
         working-directory: general_pipelines/workflows/vcf_merge
         run: |
           python -m pip install snakemake pandas pybedtools
-          snakemake -n --cores 1 --use-envmodules
+          snakemake -n --cores 1
