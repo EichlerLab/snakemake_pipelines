@@ -11,6 +11,9 @@ on:
 jobs:
   snakemake-dry-runs:
     runs-on: ubuntu-latest
+    defaults:
+    run:
+      shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
       #- uses: actions/setup-python@v4
@@ -21,7 +24,7 @@ jobs:
           conda create -n "envCI" python=3.7.1
           conda install -c bioconda -n envCI pybedtools
           conda env list
-          source activate envCI
+          conda activate envCI
           conda info
           conda list
       - name: Snakemake dry run for vcf_merge
