@@ -25,8 +25,9 @@ jobs:
           conda activate envCI
           conda info
           conda list
-          /usr/share/miniconda/envs/envCI/bin/python -m pip install snakemake
+          
       - name: Snakemake dry run for vcf_merge
         run: |
           which -a python
+          /usr/bin/python -m pip install snakemake
           snakemake -s general_pipelines/workflows/vcf_merge/Snakefile -n --cores 1 --use-envmodules --use-conda
