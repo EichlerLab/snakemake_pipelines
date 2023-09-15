@@ -11,9 +11,6 @@ on:
 jobs:
   snakemake-dry-runs:
     runs-on: ubuntu-latest
-    defaults:
-    run:
-      shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
       #- uses: actions/setup-python@v4
@@ -21,6 +18,7 @@ jobs:
       #    python-version: '3.7.1'
       - name: Install pybedtools
         run: |
+          conda init bash
           conda create -n "envCI" python=3.7.1
           conda install -c bioconda -n envCI pybedtools
           conda env list
