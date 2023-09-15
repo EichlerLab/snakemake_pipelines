@@ -20,6 +20,7 @@ jobs:
         run: |
           eval "$(conda shell.bash hook)"
           conda create -n "envCI" python=3.7.1
+          conda update -n envCI -c defaults conda
           conda install -c bioconda -n envCI pybedtools
           conda install -c bioconda -n envCI snakemake
           conda env list
