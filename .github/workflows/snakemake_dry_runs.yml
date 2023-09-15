@@ -26,8 +26,5 @@ jobs:
           conda info
           conda list
       - name: Snakemake dry run for vcf_merge
-        uses: snakemake/snakemake-github-action@v1.25.1
-        with:
-          directory: general_pipelines/workflows/vcf_merge
-          snakefile: general_pipelines/workflows/vcf_merge/Snakefile
-          args: "-n --cores 1 --use-envmodules"
+        run: |
+          snakemake -s general_pipelines/workflows/vcf_merge/Snakefile -n --cores 1 --use-envmodules --use-conda
