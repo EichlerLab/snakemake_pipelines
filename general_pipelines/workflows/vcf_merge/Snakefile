@@ -248,5 +248,5 @@ rule check_vcf:
     shell:
         """
         bcftools norm --fasta-ref {input.ref} {input.vcf} -O z | bcftools sort -O z -o {output.normed_vcf}
-        sleep 2m && tabix -f -p vcf {output.vcf}
+        sleep 2m && tabix -f -p vcf {output.normed_vcf}
         """
