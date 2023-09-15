@@ -13,14 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: ""
-          environment-file: .github/env_CI.yml
-          auto-activate-base: true
       - run: |
           conda install pybedtools
           conda env list
