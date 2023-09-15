@@ -22,7 +22,7 @@ jobs:
           conda create -n "envCI" python=3.7.1
           conda install conda=23.7.4
           conda install -c bioconda -n envCI pybedtools
-          conda install -c bioconda -n envCI snakemake
+          conda install -c bioconda -n envCI snakemake=7.32.3
           conda env list
           conda activate envCI
           conda info
