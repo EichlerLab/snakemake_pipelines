@@ -1,4 +1,4 @@
 SAMPLE	UID	VCF	COHORT	SEQTYPE	CALLABLE_H1	CALLABLE_H2
-HG002	HG002	.test_data/pav_HG002.vcf.gz	HPRC	CCS	.test_data/results/HG002/callable/callable_regions_h1_500.bed.gz	.test_data/results/HG002/callable/callable_regions_h2_500.bed.gz
-HG00438	HG00438	.test_data/pav_HG00438.vcf.gz	HPRC	CCS	.test_data/results/HG00438/callable/callable_regions_h1_500.bed.gz	.test_data/results/HG00438/callable/callable_regions_h2_500.bed.gz
-HG005	HG005	.test_data/pav_HG005.vcf.gz	HPRC	CCS	.test_data/results/HG005/callable/callable_regions_h1_500.bed.gz	.test_data/results/HG005/callable/callable_regions_h2_500.bed.gz
+HG002	HG002	/home/runner/work/general_pipelines/.test_data/pav_HG002.vcf.gz	HPRC	CCS	/home/runner/work/general_pipelines/.test_data/results/HG002/callable/callable_regions_h1_500.bed.gz	/home/runner/work/general_pipelines/.test_data/results/HG002/callable/callable_regions_h2_500.bed.gz
+HG00438	HG00438	/home/runner/work/general_pipelines/.test_data/pav_HG00438.vcf.gz	HPRC	CCS	/home/runner/work/general_pipelines/.test_data/results/HG00438/callable/callable_regions_h1_500.bed.gz	/home/runner/work/general_pipelines/.test_data/results/HG00438/callable/callable_regions_h2_500.bed.gz
+HG005	HG005	/home/runner/work/general_pipelines/.test_data/pav_HG005.vcf.gz	HPRC	CCS	/home/runner/work/general_pipelines/.test_data/results/HG005/callable/callable_regions_h1_500.bed.gz	/home/runner/work/general_pipelines/.test_data/results/HG005/callable/callable_regions_h2_500.bed.gz
