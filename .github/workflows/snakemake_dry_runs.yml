@@ -16,4 +16,4 @@ jobs:
       - name: Snakemake dry run for vcf_merge
         run: |
           /usr/bin/python -m pip install snakemake pandas pybedtools
-          snakemake -s general_pipelines/workflows/vcf_merge/Snakefile -n --cores 1 --use-envmodules
+          snakemake -s general_pipelines/workflows/vcf_merge/Snakefile --configfile general_pipelines/workflows/vcf_merge/config/config.yaml -n --cores 1 --use-envmodules
