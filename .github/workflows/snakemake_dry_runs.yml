@@ -1,11 +1,8 @@
 name: snakemake-dry-runs
-# Controls when the action will run.
+
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
   pull_request:
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -16,6 +13,5 @@ jobs:
       - name: Snakemake dry run for vcf_merge
         working-directory: general_pipelines/workflows/vcf_merge
         run: |
-          /usr/bin/python -m pip install snakemake pandas pybedtools
-          pwd
+          python -m pip install snakemake pandas pybedtools
           snakemake -n --cores 1 --use-envmodules
