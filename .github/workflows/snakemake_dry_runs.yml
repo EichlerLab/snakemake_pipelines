@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          conda install -c conda-forge pybedtools
+          conda install -c bioconda pybedtools
           conda env list
           conda info
           conda list
