@@ -1,7 +1,0 @@
-name: env_CI
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - pybedtools
