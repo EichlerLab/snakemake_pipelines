@@ -17,9 +17,9 @@ jobs:  # Add dry run jobs for other workflows
             workflow:
               - 'general_pipelines/workflows/vcf_merge/**'
       - name: Snakemake dry run for vcf_merge
-        if: steps.workflow_filter.outputs.workflow == 'true' # workflow files changed
         # Directory that has Snakefile and config
         working-directory: general_pipelines/workflows/vcf_merge
+        if: steps.workflow_filter.outputs.workflow == 'true' # workflow files changed
         # Install dependencies and dry run
         run: |
           python -m pip install snakemake pandas pybedtools
