@@ -19,15 +19,15 @@ FLAGGER_RESULTS_FILES = sys.argv[2:]
 
 BIN_SIZE = np.int32(1e6)
 
-SPACER_PROP = 0.325  # Shift lower bars by this amount to make space for ideo
+#SPACER_PROP = 0.325  # Shift lower bars by this amount to make space for ideo
 
-LABEL_SPACE = 0.325  # Add this proportion of the y range to the upper limit to make space for the chromosome label
+#LABEL_SPACE = 0.325  # Add this proportion of the y range to the upper limit to make space for the chromosome label
 
 FAI_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai'
 
 BAND_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/cyto.bed'
 GAP_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/T2T-CHM13v2_gap.bed'
-#SD_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd.bed' # commented out- supposed to have a MATCH column
+SD_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd_frac_match.bed'
 TR_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/chm13_t2t_trf.bed'
 
 #BINS_BED = BedTool('/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows_chr22.bed')
@@ -43,7 +43,7 @@ ASM_COLORS = {
 
 df_band = pd.read_csv(BAND_FILE_NAME, sep='\t')
 df_gap = pd.read_csv(GAP_FILE_NAME, sep='\t')
-#df_sd = pd.read_csv(SD_FILE_NAME, sep='\t')
+df_sd = pd.read_csv(SD_FILE_NAME, sep='\t')
 df_tr = pd.read_csv(
     TR_FILE_NAME, sep='\t', header=None, names=('#CHROM', 'POS', 'END')
 )
@@ -127,15 +127,15 @@ asm_dict_all = pd.DataFrame()
 for asm in asm_dict:
     asm_dict_all = pd.concat([asm_dict_all, asm_dict[asm]])
     ideo_hist = svpoplib.plot.ideo.ideo_hist(
-        asm_dict[asm], FAI_FILE_NAME, df_band, df_gap, df_sd=None,
-        df_tr=df_tr, cb_func=ideo_cb, label_col='ASM'
+        asm_dict[asm], FAI_FILE_NAME, df_band, df_gap, df_sd,
+        df_tr, cb_func=ideo_cb, label_col='ASM'
     )
     ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/{asm}.png', bbox_inches='tight')
     ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/{asm}.svg', bbox_inches='tight')
 
 print('Making overall plot')
 ideo_hist = svpoplib.plot.ideo.ideo_hist(
-    asm_dict_all, FAI_FILE_NAME, df_band, df_gap, df_sd=None, df_tr=df_tr,
+    asm_dict_all, FAI_FILE_NAME, df_band, df_gap, df_sd, df_tr,
     cb_func=ideo_cb, label_col='ASM'
 )
 ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/all.png', bbox_inches='tight')
