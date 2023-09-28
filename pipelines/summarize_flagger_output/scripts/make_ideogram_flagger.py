@@ -75,7 +75,7 @@ def ideo_cb(df, chrom, ax, fig):
     # Need small y_max in order for ideogram to show, but set y labels as
     # actual number of samples
     ax.set_ylim(0, 1)
-    ax.set_ylabel('# Samples', fontsize=8)
+    ax.set_ylabel('# Samples')
     ax.set_yticks([0, 1])
     ax.set_yticklabels([0, max_bar_height])
 
@@ -86,8 +86,7 @@ def ideo_cb(df, chrom, ax, fig):
         asms_for_legend = list(asms)[::-1]
         ax.legend(
             labels=asms_for_legend, handles=[d[x] for x in asms_for_legend], 
-            loc='center left', bbox_to_anchor=(-1.5, 0.35),
-            fontsize=8
+            loc='center left', bbox_to_anchor=(-1.5, 0.35)
         )
 
 # asm_dict: All binned blocks (#CHROM, POS, END) for each Flag (Err, Dup, Hap, Col, Unk).
