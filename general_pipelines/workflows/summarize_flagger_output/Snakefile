@@ -1,0 +1,125 @@
+import pandas as pd
+
+MANIFEST = config.get('MANIFEST', 'config/manifest.tab')
+manifest_df = pd.read_csv(MANIFEST, sep='\t', index_col=['SAMPLE'])
+
+def find_paf(wildcards):
+	# Concatenated h1 and h2 PAFs
+	return manifest_df.at[wildcards.sample, "PAF"]
+
+def find_flagger_bed(wildcards):
+	return manifest_df.at[wildcards.sample, "FLAGGER_BED"]
+
+def find_per_sample_flagger_summaries(wildcards):
+	return expand(
+		rules.summarize_bed_per_sample.output.tsv, sample=manifest_df.index
+	)
+
+def find_converted_pafs(wildcards):
+        return expand(
+                rules.liftover_coords.output.paf, sample=manifest_df.index
+        )
+
+rule all:
+	input:
+		'results/flagger_summary/flagger_summary.tsv',
+                'results/plots/all.png', 
+                'results/plots/all.svg', 
+                'results/plots/Col.png', 
+                'results/plots/Col.svg', 
+                'results/plots/Dup.png', 
+                'results/plots/Dup.svg', 
+                'results/plots/Err.png', 
+                'results/plots/Err.svg', 
+                'results/plots/Hap.png', 
+                'results/plots/Hap.svg', 
+                'results/plots/Unk.png', 
+                'results/plots/Unk.svg' 
+
+rule liftover_coords:
+	input:
+		paf = find_paf,
+		flagger_bed = find_flagger_bed,
+	output:
+		paf = "converted_paf/{sample}.paf",
+	threads: 1,
+	envmodules:
+	    "modules",
+	    "modules-init",
+	    "modules-gs/prod",
+	    "modules-eichler/prod",
+	    "rustybam/0.1.27",
+	resources:
+		mem = 128,
+		hrs = 2,
+	shell:
+		'''
+		rustybam liftover -b <(cut -f 1-4 {input.flagger_bed}| tail -n +2) -q {input.paf} > {output.paf}
+		awk '{{s+=$3-$2;}} END {{print "Total Flagger bases before liftover: " s}}' {input.flagger_bed}
+		awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.paf}
+		'''
+
+rule make_ideogram:
+	input:
+		paf = find_converted_pafs,
+	output:
+                all_png = 'results/plots/all.png', 
+                all_svg = 'results/plots/all.svg', 
+                col_png = 'results/plots/Col.png', 
+                col_svg = 'results/plots/Col.svg', 
+                dup_png = 'results/plots/Dup.png', 
+                dup_svg = 'results/plots/Dup.svg', 
+                err_png = 'results/plots/Err.png', 
+                err_svg = 'results/plots/Err.svg', 
+                hap_png = 'results/plots/Hap.png', 
+                hap_svg = 'results/plots/Hap.svg', 
+                unk_png = 'results/plots/Unk.png', 
+                unk_svg = 'results/plots/Unk.svg', 
+	threads: 1,
+	resources:
+		mem = 12,
+		hrs = 2,
+	shell:
+		'''
+		python3 make_ideogram_flagger.py results/plots {input.paf}
+		'''
+
+rule summarize_bed_per_sample:
+	input:
+		bed = find_flagger_bed,
+	output:
+		tsv = 'results/flagger_summary/per_sample/{sample}.tsv',
+	threads: 1,
+	resources:
+		mem = 12,
+		hrs = 10,
+	run:
+		df = pd.read_csv(
+			input.bed, sep='\t', header=0, usecols=[0, 1, 2, 3],
+			names=['CHROM', 'POS', 'END', 'ASM']
+		)
+		df['Total'] = df['END']-df['POS']
+		df = df.groupby('ASM').sum()[['Total']].T
+		df.insert(0, 'Sample', f'{wildcards.sample}')
+		df.to_csv(output.tsv, sep='\t', index=False)
+
+rule combine_summaries:
+	input:
+		tsv = find_per_sample_flagger_summaries,
+	output:
+		tsv = 'results/flagger_summary/flagger_summary.tsv',
+	threads: 1,
+	resources:
+		mem = 12,
+		hrs = 10,
+	run:
+		# Each sample is row in out table
+		sample_dfs = [
+			pd.read_csv(sample_summary, sep='\t')
+			for sample_summary in input.tsv
+		]
+		out_df = pd.concat(sample_dfs)
+
+		out_df.to_csv(output.tsv, sep='\t', index=False)
+
+
