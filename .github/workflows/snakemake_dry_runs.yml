@@ -20,8 +20,8 @@ jobs:  # Add dry run jobs for other workflows
   dry-run-summarize-flagger_output:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v4
-        - name: Snakemake dry run for summarize_flagger_output
+      - uses: actions/checkout@v4
+      - name: Snakemake dry run for summarize_flagger_output
         # Directory that has Snakefile and config
         working-directory: general_pipelines/workflows/summarize_flagger_output
         # Install dependencies and dry run
