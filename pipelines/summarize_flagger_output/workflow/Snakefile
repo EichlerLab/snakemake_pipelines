@@ -81,7 +81,7 @@ rule make_ideogram:
 		hrs = 2,
 	shell:
 		'''
-		python3 make_ideogram_flagger.py results/plots {input.paf}
+		python3 scripts/make_ideogram_flagger.py results/plots {input.paf}
 		'''
 
 rule summarize_bed_per_sample:
