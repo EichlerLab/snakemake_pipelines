@@ -43,7 +43,7 @@ rule all:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
             "results/plots/{subgroup}/{flag}.png",
-            subgroup=SUBGROUP_DICT + {"all"},
+            subgroup=SUBGROUP_DICT + {"all" : "all"},
             flag=FLAGGER_FLAGS + ["all"],
             ext=["png", "svg"],
         ),
