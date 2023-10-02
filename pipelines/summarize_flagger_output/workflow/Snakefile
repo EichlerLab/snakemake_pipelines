@@ -38,12 +38,18 @@ def ideo_ref_files(wildcards):
     return unpack(config["ref_files"][REFERENCE])
 
 
+wildcard_constraints:
+    sample="|".join(manifest_df.index),
+    flag="|".join(SUBGROUP_DICT | {"all": "all"}),
+    ext="|".join(["png", "svg"]),
+
+
 rule all:
     input:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
             "results/plots/{subgroup}/{flag}.png",
-            subgroup=SUBGROUP_DICT | {"all" : "all"},
+            subgroup=SUBGROUP_DICT | {"all": "all"},
             flag=FLAGGER_FLAGS + ["all"],
             ext=["png", "svg"],
         ),

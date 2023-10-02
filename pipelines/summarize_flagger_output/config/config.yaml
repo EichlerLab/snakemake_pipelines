@@ -11,7 +11,7 @@ sample_subsets:
   hgsvc_batch1_test:
     - GM18989
     - GM19129
-    - GM20355
+    - GM19331
 
 ref_files:
   chm13t2t:
