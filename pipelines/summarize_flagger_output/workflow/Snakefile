@@ -60,8 +60,8 @@ rule make_ideogram:
 	input:
 		paf = find_converted_pafs,
 	output:
-		'results/plots/{flag}.png',
-        'results/plots/{flag}.svg'
+		png = 'results/plots/{flag}.png',
+        svg = 'results/plots/{flag}.svg'
 	threads: 1,
 	resources:
 		mem = 12,

@@ -131,6 +131,6 @@ ideo_hist = svpoplib.plot.ideo.ideo_hist(
     all_samples_df, fai_filename, df_band, df_gap, df_sd,
     df_tr, cb_func=ideo_cb, label_col='ASM'
 )
-ideo_hist.fig.savefig(outfiles[0], bbox_inches='tight')
-ideo_hist.fig.savefig(outfiles[1], bbox_inches='tight')
+ideo_hist.fig.savefig(outfiles.png, bbox_inches='tight')
+ideo_hist.fig.savefig(outfiles.svg, bbox_inches='tight')
 
