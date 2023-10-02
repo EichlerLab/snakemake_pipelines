@@ -49,7 +49,7 @@ rule all:
     input:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
-            "results/plots/{subgroup}/{flag}.png",
+            "results/plots/{subgroup}/{flag}.{ext}",
             subgroup=SUBGROUP_DICT | {"all": "all"},
             flag=FLAGGER_FLAGS + ["all"],
             ext=["png", "svg"],
