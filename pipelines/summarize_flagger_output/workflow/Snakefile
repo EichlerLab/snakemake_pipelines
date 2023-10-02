@@ -35,7 +35,7 @@ def find_converted_pafs(wildcards):
 
 
 def ideo_ref_files(wildcards):
-    return unpack(config["ref_files"][REFERENCE])
+    return config["ref_files"][REFERENCE]
 
 
 wildcard_constraints:
@@ -81,7 +81,7 @@ rule liftover_coords:
 
 rule make_ideogram:
     input:
-        ideo_ref_files,
+        unpack(ideo_ref_files),
         paf=find_converted_pafs,
     output:
         png="results/plots/{subgroup}/{flag}.png",
