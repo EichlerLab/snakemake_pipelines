@@ -35,6 +35,10 @@ df_tr = pd.read_csv(
     conf[ref]['tandem_repeats'], sep='\t', header=None,
     names=('#CHROM', 'POS', 'END')
 )
+samples_to_plot = None  # Use all samples (default)
+if ('samples_to_plot' in conf) and (conf['samples_to_plot']):
+    samples_to_plot = conf['samples_to_plot']
+
 flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
 outfiles = snakemake.output
@@ -88,8 +92,12 @@ all_samples_df = pd.DataFrame()
 for infile in infiles:
     #print(f'Reading in {infile}')
     assert(infile.lower().endswith('.paf'))
-    #if infile not in ['GM18989.paf', 'GM19129.paf', 'GM19331.paf']:
-    #    continue
+    sample = os.path.basename(infile).split('.')[0]  # Since PAFs are named {sample}.paf
+    if (samples_to_plot is not None) and (sample not in samples_to_plot):
+        print(f'Sample {sample}: skipping')
+        continue
+    else:
+        print(f'Sample {sample}')
     df = pd.read_csv(
         infile, sep='\t', header=None,
         usecols=[0, 2, 3, 12], names=['#CHROM', 'POS', 'END', 'ASM']
@@ -108,7 +116,7 @@ for infile in infiles:
             continue
         asm_df.columns=['#CHROM', 'POS', 'END']
         asm_df['ASM'] = asm
-        asm_df['SAMPLE'] = os.path.basename(infile).split('.')[0]
+        asm_df['SAMPLE'] = sample
         all_samples_df = pd.concat([all_samples_df, asm_df])
 
 print(f'Making plot for Flagger category {flagger_category}')
