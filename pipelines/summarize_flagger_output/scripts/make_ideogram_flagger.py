@@ -54,7 +54,7 @@ def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
     # and label_col from the df and divides bins in half, use original df
     mpl.rcParams.update({'font.size':8})
-    asms = df['ASM'].unique()
+    asms = sorted(df['ASM'].unique())
     max_bar_height = len(samples) * len(asms)
     df = all_samples_df
 
