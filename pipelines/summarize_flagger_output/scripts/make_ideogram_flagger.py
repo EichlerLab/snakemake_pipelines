@@ -23,7 +23,6 @@ ASM_COLORS = {
     'Unk': (0.502, 0.502, 0.502),
     'Err': (0.635, 0, 0.145)
 }
-BINS_BED = BedTool('/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows.bed')
 
 conf = snakemake.config
 ref = conf['reference']
@@ -47,7 +46,9 @@ else:
 
 flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
+bins_bed = BedTool(snakemake.input.bed)
 outfiles = snakemake.output
+
 
 def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
@@ -103,7 +104,7 @@ for infile in infiles:
         #print(f'Sample {sample}: skipping')
         continue
     else:
-        print(f'Sample {sample}')
+        pass#print(f'{sample}')
     df = pd.read_csv(
         infile, sep='\t', header=None,
         usecols=[0, 2, 3, 12], names=['#CHROM', 'POS', 'END', 'ASM']
@@ -115,7 +116,7 @@ for infile in infiles:
         if flagger_category not in [asm, 'all']:
             continue
         asm_bed = BedTool.from_dataframe(df.loc[df['ASM'] == asm])
-        asm_df = BINS_BED.intersect(
+        asm_df = bins_bed.intersect(
             asm_bed, wa=True, u=True
         ).to_dataframe()
         if asm_df.empty:
