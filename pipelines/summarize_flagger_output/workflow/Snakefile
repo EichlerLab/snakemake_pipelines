@@ -6,7 +6,7 @@ configfile: "config/config.yaml"
 
 MANIFEST = config.get("manifest", "config/manifest.tab")
 REFERENCE = config["reference"]
-FLAGGER_FLAGS = config["flagger_flags"]
+FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"]) 
 
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col=["SAMPLE"])
 
@@ -27,6 +27,9 @@ def find_per_sample_flagger_summaries(wildcards):
 def find_converted_pafs(wildcards):
     return expand(rules.liftover_coords.output.paf, sample=manifest_df.index)
 
+
+def ideo_ref_files(wildcards):
+    return unpack(config['ref_files'][REFERENCE])
 
 rule all:
     input:
@@ -65,6 +68,7 @@ rule liftover_coords:
 rule make_ideogram:
     input:
         paf=find_converted_pafs,
+        ideo_ref_files
     output:
         png="results/plots/{flag}.png",
         svg="results/plots/{flag}.svg",
