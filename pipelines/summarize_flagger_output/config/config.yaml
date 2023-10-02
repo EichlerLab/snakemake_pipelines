@@ -7,10 +7,12 @@ flagger_flags:
   - Unk
   - Hap
 
-#samples_to_plot:
-#  - GM18989
-#  - GM19129
-#  - GM20355
+samples_to_plot: hgsvc_batch1_test  # Comment out line to plot all samples
+
+hgsvc_batch1_test:
+  - GM18989
+  - GM19129
+  - GM20355
 
 chm13t2t:
   fai: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai

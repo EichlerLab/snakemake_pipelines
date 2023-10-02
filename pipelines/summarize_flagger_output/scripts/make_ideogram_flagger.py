@@ -37,7 +37,13 @@ df_tr = pd.read_csv(
 )
 samples_to_plot = None  # Use all samples (default)
 if ('samples_to_plot' in conf) and (conf['samples_to_plot']):
-    samples_to_plot = conf['samples_to_plot']
+    samples_to_plot = conf[conf['samples_to_plot']]
+    print(
+        f'Plotting sample batch {conf["samples_to_plot"]}: '
+        f'{", ".join(conf[conf["samples_to_plot"]])}'
+    )
+else:
+    print('Plotting all samples')
 
 flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
@@ -94,7 +100,7 @@ for infile in infiles:
     assert(infile.lower().endswith('.paf'))
     sample = os.path.basename(infile).split('.')[0]  # Since PAFs are named {sample}.paf
     if (samples_to_plot is not None) and (sample not in samples_to_plot):
-        print(f'Sample {sample}: skipping')
+        #print(f'Sample {sample}: skipping')
         continue
     else:
         print(f'Sample {sample}')
