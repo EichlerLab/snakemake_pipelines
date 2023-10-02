@@ -34,15 +34,6 @@ df_sd = pd.read_csv(snakemake.input.sd, sep="\t")
 df_tr = pd.read_csv(
     snakemake.input.tandem_repeats, sep="\t", header=None, names=("#CHROM", "POS", "END")
 )
-samples_to_plot = None  # Use all samples (default)
-if ("samples_to_plot" in conf) and (conf["samples_to_plot"]):
-    samples_to_plot = conf[conf["samples_to_plot"]]
-    print(
-        f'Plotting sample batch {conf["samples_to_plot"]}: '
-        f'{", ".join(conf[conf["samples_to_plot"]])}'
-    )
-else:
-    print("Plotting all samples")
 
 flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
@@ -104,13 +95,8 @@ all_samples_df = pd.DataFrame()
 
 for infile in infiles:
     # print(f'Reading in {infile}')
-    assert infile.lower().endswith(".paf")
     sample = os.path.basename(infile).split(".")[0]  # Since PAFs are named {sample}.paf
-    if (samples_to_plot is not None) and (sample not in samples_to_plot):
-        # print(f'Sample {sample}: skipping')
-        continue
-    else:
-        print(f"Sample {sample}")
+    print(f"Sample {sample}")
     df = pd.read_csv(
         infile,
         sep="\t",
@@ -119,10 +105,12 @@ for infile in infiles:
         names=["#CHROM", "POS", "END", "ASM"],
     )
     df["ASM"] = df["ASM"].apply(lambda x: x.split(":")[-1].split("_")[0])
-    for asm in df["ASM"].unique():
+    if flagger_category == 'all':
+        iter_range = df["ASM"].unique()
+    else:
+        iter_range = [flagger_category]
+    for asm in iter_range:
         if not asm:
-            continue
-        if flagger_category not in [asm, "all"]:
             continue
         asm_bed = BedTool.from_dataframe(df.loc[df["ASM"] == asm])
         asm_df = BINS_BED.intersect(asm_bed, wa=True, u=True).to_dataframe()
