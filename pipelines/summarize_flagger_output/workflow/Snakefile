@@ -73,7 +73,7 @@ rule make_ideogram:
         mem=12,
         hrs=2,
     script:
-        "scripts/make_ideogram_flagger.py"
+        "../scripts/make_ideogram_flagger.py"
 
 
 rule summarize_bed_per_sample:
