@@ -4,34 +4,17 @@ import pandas as pd
 import os
 import numpy as np
 import sys
-import argparse
 import pylab as pl
 import matplotlib as mpl
-from matplotlib import collections  as mc
-sys.path.append('/net/eichler/vol26/7200/software/pipelines/svpop/svpop-3.4.0/dep')
+from matplotlib import collections as mc
+
+sys.path.append(
+    '/net/eichler/vol26/7200/software/pipelines/svpop/svpop-3.4.0/dep'
+)
 sys.path.append('/net/eichler/vol26/7200/software/pipelines/svpop/svpop-3.4.0')
 import svpoplib
 
-OUT_PLOTS_DIR = sys.argv[1]
-FLAGGER_RESULTS_FILES = sys.argv[2:]
-
-#FLAGGER_RESULTS_DIR = '/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/converted_paf' # Beds/ PAFs with lifted over coordinates
-
 BIN_SIZE = np.int32(1e6)
-
-#SPACER_PROP = 0.325  # Shift lower bars by this amount to make space for ideo
-
-#LABEL_SPACE = 0.325  # Add this proportion of the y range to the upper limit to make space for the chromosome label
-
-FAI_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai'
-
-BAND_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/cyto.bed'
-GAP_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/T2T-CHM13v2_gap.bed'
-SD_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd_frac_match.bed'
-TR_FILE_NAME = '/net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/chm13_t2t_trf.bed'
-
-#BINS_BED = BedTool('/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows_chr22.bed')
-BINS_BED = BedTool('/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows.bed')
 
 ASM_COLORS = {
     'Hap': (0, 0.541, 0),
@@ -40,13 +23,21 @@ ASM_COLORS = {
     'Unk': (0.502, 0.502, 0.502),
     'Err': (0.635, 0, 0.145)
 }
+BINS_BED = BedTool('/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows.bed')
 
-df_band = pd.read_csv(BAND_FILE_NAME, sep='\t')
-df_gap = pd.read_csv(GAP_FILE_NAME, sep='\t')
-df_sd = pd.read_csv(SD_FILE_NAME, sep='\t')
+conf = snakemake.config
+ref = conf['reference']
+fai_filename = conf[ref]['fai']
+df_band = pd.read_csv(conf[ref]['chrom_bands'], sep='\t')
+df_gap = pd.read_csv(conf[ref]['gaps'], sep='\t')
+df_sd = pd.read_csv(conf[ref]['sd'], sep='\t')
 df_tr = pd.read_csv(
-    TR_FILE_NAME, sep='\t', header=None, names=('#CHROM', 'POS', 'END')
+    conf[ref]['tandem_repeats'], sep='\t', header=None,
+    names=('#CHROM', 'POS', 'END')
 )
+flagger_category = snakemake.wildcards.flag
+infiles = snakemake.input.paf
+outfiles = snakemake.output
 
 def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
@@ -54,7 +45,7 @@ def ideo_cb(df, chrom, ax, fig):
     mpl.rcParams.update({'font.size':8})
     asms = df['ASM'].unique()
     max_bar_height = len(samples) * len(asms)
-    df = asm_dict[asms[0]] if (len(asms) == 1) else asm_dict_all
+    df = all_samples_df
 
     # Subset to chromosome
     df_chrom = df.loc[df['#CHROM'] == chrom].copy()
@@ -92,9 +83,10 @@ def ideo_cb(df, chrom, ax, fig):
 # asm_dict: All binned blocks (#CHROM, POS, END) for each Flag (Err, Dup, Hap, Col, Unk).
 # Bedtools intersect each Flag of each sample w coord windows
 # and concat to the overall df for the Flag
-asm_dict = {}
-for infile in FLAGGER_RESULTS_FILES:
-    print(f'Reading in {infile}')
+all_samples_df = pd.DataFrame()
+
+for infile in infiles:
+    #print(f'Reading in {infile}')
     assert(infile.lower().endswith('.paf'))
     #if infile not in ['GM18989.paf', 'GM19129.paf', 'GM19331.paf']:
     #    continue
@@ -106,39 +98,25 @@ for infile in FLAGGER_RESULTS_FILES:
     for asm in df['ASM'].unique():
         if not asm:
             continue
-        #if asm != 'Dup':
-        #    continue
-        if asm not in asm_dict:
-            asm_dict[asm] = pd.DataFrame()
+        if flagger_category not in [asm, 'all']:
+            continue
         asm_bed = BedTool.from_dataframe(df.loc[df['ASM'] == asm])
-        asm_df = BINS_BED.intersect(asm_bed, wa=True, u=True).to_dataframe()
+        asm_df = BINS_BED.intersect(
+            asm_bed, wa=True, u=True
+        ).to_dataframe()
         if asm_df.empty:
             continue
         asm_df.columns=['#CHROM', 'POS', 'END']
         asm_df['ASM'] = asm
         asm_df['SAMPLE'] = os.path.basename(infile).split('.')[0]
-        asm_dict[asm] = pd.concat([asm_dict[asm], asm_df])
+        all_samples_df = pd.concat([all_samples_df, asm_df])
 
-print('Making per-Flag plots')
-samples = sorted(asm_dict['Hap']['SAMPLE'].unique())
-
-asm_dict_all = pd.DataFrame()
-for asm in asm_dict:
-    asm_dict_all = pd.concat([asm_dict_all, asm_dict[asm]])
-    ideo_hist = svpoplib.plot.ideo.ideo_hist(
-        asm_dict[asm], FAI_FILE_NAME, df_band, df_gap, df_sd,
-        df_tr, cb_func=ideo_cb, label_col='ASM'
-    )
-    ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/{asm}.png', bbox_inches='tight')
-    ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/{asm}.svg', bbox_inches='tight')
-
-print('Making overall plot')
+print(f'Making plot for Flagger category {flagger_category}')
+samples = sorted(all_samples_df['SAMPLE'].unique())
 ideo_hist = svpoplib.plot.ideo.ideo_hist(
-    asm_dict_all, FAI_FILE_NAME, df_band, df_gap, df_sd, df_tr,
-    cb_func=ideo_cb, label_col='ASM'
+    all_samples_df, fai_filename, df_band, df_gap, df_sd,
+    df_tr, cb_func=ideo_cb, label_col='ASM'
 )
-ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/all.png', bbox_inches='tight')
-ideo_hist.fig.savefig(f'{OUT_PLOTS_DIR}/all.svg', bbox_inches='tight')
-
-
+ideo_hist.fig.savefig(outfiles[0], bbox_inches='tight')
+ideo_hist.fig.savefig(outfiles[1], bbox_inches='tight')
 

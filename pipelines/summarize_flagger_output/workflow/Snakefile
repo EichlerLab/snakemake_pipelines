@@ -1,6 +1,11 @@
 import pandas as pd
 
-MANIFEST = config.get('MANIFEST', 'config/manifest.tab')
+configfile: 'config/config.yaml'
+
+MANIFEST = config.get('manifest', 'config/manifest.tab')
+REFERENCE = config['reference']
+FLAGGER_FLAGS = config['flagger_flags']
+
 manifest_df = pd.read_csv(MANIFEST, sep='\t', index_col=['SAMPLE'])
 
 def find_paf(wildcards):
@@ -16,25 +21,17 @@ def find_per_sample_flagger_summaries(wildcards):
 	)
 
 def find_converted_pafs(wildcards):
-        return expand(
-                rules.liftover_coords.output.paf, sample=manifest_df.index
-        )
+	return expand(
+		rules.liftover_coords.output.paf, sample=manifest_df.index
+	)
 
 rule all:
 	input:
-		'results/flagger_summary/flagger_summary.tsv',
-                'results/plots/all.png', 
-                'results/plots/all.svg', 
-                'results/plots/Col.png', 
-                'results/plots/Col.svg', 
-                'results/plots/Dup.png', 
-                'results/plots/Dup.svg', 
-                'results/plots/Err.png', 
-                'results/plots/Err.svg', 
-                'results/plots/Hap.png', 
-                'results/plots/Hap.svg', 
-                'results/plots/Unk.png', 
-                'results/plots/Unk.svg' 
+        'results/flagger_summary/flagger_summary.tsv',
+		expand(
+			'results/plots/{flag}.{ext}', flag=FLAGGER_FLAGS + ['all'],
+			ext=['png', 'svg']
+		)
 
 rule liftover_coords:
 	input:
@@ -63,26 +60,14 @@ rule make_ideogram:
 	input:
 		paf = find_converted_pafs,
 	output:
-                all_png = 'results/plots/all.png', 
-                all_svg = 'results/plots/all.svg', 
-                col_png = 'results/plots/Col.png', 
-                col_svg = 'results/plots/Col.svg', 
-                dup_png = 'results/plots/Dup.png', 
-                dup_svg = 'results/plots/Dup.svg', 
-                err_png = 'results/plots/Err.png', 
-                err_svg = 'results/plots/Err.svg', 
-                hap_png = 'results/plots/Hap.png', 
-                hap_svg = 'results/plots/Hap.svg', 
-                unk_png = 'results/plots/Unk.png', 
-                unk_svg = 'results/plots/Unk.svg', 
+		'results/plots/{flag}.png',
+        'results/plots/{flag}.svg'
 	threads: 1,
 	resources:
 		mem = 12,
 		hrs = 2,
-	shell:
-		'''
-		python3 scripts/make_ideogram_flagger.py results/plots {input.paf}
-		'''
+    script:
+    	'scripts/make_ideogram_flagger.py'
 
 rule summarize_bed_per_sample:
 	input:
@@ -121,5 +106,4 @@ rule combine_summaries:
 		out_df = pd.concat(sample_dfs)
 
 		out_df.to_csv(output.tsv, sep='\t', index=False)
-
 
