@@ -27,12 +27,12 @@ BINS_BED = BedTool(
 
 conf = snakemake.config
 ref = conf["reference"]
-fai_filename = conf[ref]["fai"]
-df_band = pd.read_csv(conf[ref]["chrom_bands"], sep="\t")
-df_gap = pd.read_csv(conf[ref]["gaps"], sep="\t")
-df_sd = pd.read_csv(conf[ref]["sd"], sep="\t")
+fai_filename = snakemake.input.fai
+df_band = pd.read_csv(snakemake.input.chrom_bands, sep="\t")
+df_gap = pd.read_csv(snakemake.input.gaps, sep="\t")
+df_sd = pd.read_csv(snakemake.input.sd, sep="\t")
 df_tr = pd.read_csv(
-    conf[ref]["tandem_repeats"], sep="\t", header=None, names=("#CHROM", "POS", "END")
+    snakemake.input.tandem_repeats, sep="\t", header=None, names=("#CHROM", "POS", "END")
 )
 samples_to_plot = None  # Use all samples (default)
 if ("samples_to_plot" in conf) and (conf["samples_to_plot"]):
