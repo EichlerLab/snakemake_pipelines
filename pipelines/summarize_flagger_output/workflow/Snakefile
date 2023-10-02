@@ -40,8 +40,9 @@ def ideo_ref_files(wildcards):
 
 wildcard_constraints:
     sample="|".join(manifest_df.index),
-    flag="|".join(SUBGROUP_DICT | {"all": "all"}),
+    subgroup="|".join(SUBGROUP_DICT | {"all": "all"}),
     ext="|".join(["png", "svg"]),
+    flag="|".join(FLAGGER_FLAGS + ["all"]),
 
 
 rule all:
