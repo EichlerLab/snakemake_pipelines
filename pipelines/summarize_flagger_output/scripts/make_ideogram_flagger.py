@@ -32,7 +32,10 @@ df_band = pd.read_csv(snakemake.input.chrom_bands, sep="\t")
 df_gap = pd.read_csv(snakemake.input.gaps, sep="\t")
 df_sd = pd.read_csv(snakemake.input.sd, sep="\t")
 df_tr = pd.read_csv(
-    snakemake.input.tandem_repeats, sep="\t", header=None, names=("#CHROM", "POS", "END")
+    snakemake.input.tandem_repeats,
+    sep="\t",
+    header=None,
+    names=("#CHROM", "POS", "END"),
 )
 
 flagger_category = snakemake.wildcards.flag
@@ -105,7 +108,7 @@ for infile in infiles:
         names=["#CHROM", "POS", "END", "ASM"],
     )
     df["ASM"] = df["ASM"].apply(lambda x: x.split(":")[-1].split("_")[0])
-    if flagger_category == 'all':
+    if flagger_category == "all":
         iter_range = df["ASM"].unique()
     else:
         iter_range = [flagger_category]
