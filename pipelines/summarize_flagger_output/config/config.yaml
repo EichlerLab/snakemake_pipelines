@@ -20,3 +20,4 @@ ref_files:
     sd: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd_frac_match.bed
     tandem_repeats: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/chm13_t2t_trf.bed
     chrom_bands: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/cyto.bed
+    
