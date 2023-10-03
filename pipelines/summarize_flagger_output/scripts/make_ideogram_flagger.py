@@ -54,7 +54,7 @@ def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
     # and label_col from the df and divides bins in half, use original df
     mpl.rcParams.update({'font.size':8})
-    asms = sorted(df['ASM'].unique())
+    asms = sorted(df['ASM'].unique(), reverse=True)
     max_bar_height = len(samples) * len(asms)
     df = all_samples_df
 
@@ -82,19 +82,23 @@ def ideo_cb(df, chrom, ax, fig):
     ax.set_yticklabels([0, max_bar_height])
 
     # Show legend
-    if len(asms) > 1 and chrom == 'chrY':
+    if len(asms) > 1:
         h, l = ax.get_legend_handles_labels()
-        d = {l[i]:h[i] for i in range(len(h))}
-        asms_for_legend = list(asms)[::-1]
-        ax.legend(
-            labels=asms_for_legend, handles=[d[x] for x in asms_for_legend], 
-            loc='center left', bbox_to_anchor=(-1.5, 0.35)
-        )
+        legend_d.update({l[i]:h[i] for i in range(len(h))})
+
+        if chrom == 'chrY':
+            asms_for_legend = asms[::-1]
+            ax.legend(
+                labels=asms_for_legend, handles=[legend_d[x] for x in asms_for_legend],
+                loc='center left', bbox_to_anchor=(-1.5, 0.35)
+            )
+
 
 # asm_dict: All binned blocks (#CHROM, POS, END) for each Flag (Err, Dup, Hap, Col, Unk).
 # Bedtools intersect each Flag of each sample w coord windows
 # and concat to the overall df for the Flag
 all_samples_df = pd.DataFrame()
+legend_d = {}
 
 for infile in infiles:
     #print(f'Reading in {infile}')
