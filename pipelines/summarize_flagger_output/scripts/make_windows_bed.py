@@ -4,9 +4,7 @@ import csv
 
 BIN_SIZE = 1000000
 
-conf = snakemake.config
 out_fname = snakemake.output.bed
-
 fai_filename = snakemake.input.fai
 
 with open(out_fname, "w") as out_f:

@@ -22,8 +22,6 @@ ASM_COLORS = {
     "Err": (0.635, 0, 0.145),
 }
 
-conf = snakemake.config
-ref = conf["reference"]
 fai_filename = snakemake.input.fai
 df_band = pd.read_csv(snakemake.input.chrom_bands, sep="\t")
 df_gap = pd.read_csv(snakemake.input.gaps, sep="\t")
