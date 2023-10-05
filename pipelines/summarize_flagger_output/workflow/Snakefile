@@ -6,8 +6,8 @@ configfile: "config/config.yaml"
 
 MANIFEST = config.get("manifest", "config/manifest.tab")
 REFERENCE = config["reference"]
-FLAGGER_FLAGS = config["flagger_flags"]
-
+FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
+SUBGROUP_DICT = config.get("sample_subsets", {})
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col=["SAMPLE"])
 
 
@@ -25,14 +25,32 @@ def find_per_sample_flagger_summaries(wildcards):
 
 
 def find_converted_pafs(wildcards):
-    return expand(rules.liftover_coords.output.paf, sample=manifest_df.index)
+    if wildcards.subgroup == "all":
+        return expand(rules.liftover_coords.output.paf, sample=manifest_df.index)
+    else:
+        return expand(
+            rules.liftover_coords.output.paf,
+            sample=[x for x in SUBGROUP_DICT[wildcards.subgroup]],
+        )
+
+
+def ideo_ref_files(wildcards):
+    return config["ref_files"][REFERENCE]
+
+
+wildcard_constraints:
+    sample="|".join(manifest_df.index),
+    subgroup="|".join(SUBGROUP_DICT | {"all": "all"}),
+    ext="|".join(["png", "svg"]),
+    flag="|".join(FLAGGER_FLAGS + ["all"]),
 
 
 rule all:
     input:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
-            "results/plots/{flag}.{ext}",
+            "results/plots/{subgroup}/{flag}.{ext}",
+            subgroup=SUBGROUP_DICT | {"all": "all"},
             flag=FLAGGER_FLAGS + ["all"],
             ext=["png", "svg"],
         ),
@@ -74,17 +92,18 @@ rule make_windows_bed:
 
 rule make_ideogram:
     input:
+        unpack(ideo_ref_files),
         paf=find_converted_pafs,
         bed=rules.make_windows_bed.output.bed,
     output:
-        png="results/plots/{flag}.png",
-        svg="results/plots/{flag}.svg",
+        png="results/plots/{subgroup}/{flag}.png",
+        svg="results/plots/{subgroup}/{flag}.svg",
     threads: 1
     resources:
         mem=12,
         hrs=2,
     script:
-        "scripts/make_ideogram_flagger.py"
+        "../scripts/make_ideogram_flagger.py"
 
 
 rule summarize_bed_per_sample:

@@ -1,0 +1,22 @@
+manifest: config/manifest.tab
+reference: chm13t2t
+flagger_flags:
+  - Col
+  - Err
+  - Dup
+  - Unk
+  - Hap
+
+sample_subsets:
+  hgsvc_batch1_test:
+    - GM18989
+    - GM19129
+    - GM19331
+
+ref_files:
+  chm13t2t:
+    fai: /home/runner/work/general_pipelines/general_pipelines/.test_data/assemblies/chm13/T2T-CHM13v2.fasta.fai
+    gaps: /home/runner/work/general_pipelines/general_pipelines/.test_data/assemblies/chm13/T2T-CHM13v2_gap.bed
+    sd: /home/runner/work/general_pipelines/general_pipelines/.test_data/assemblies/chm13/chm13v2.0.sd_frac_match.bed
+    tandem_repeats: /home/runner/work/general_pipelines/general_pipelines/.test_data/assemblies/chm13/chm13_t2t_trf.bed
+    chrom_bands: /home/runner/work/general_pipelines/general_pipelines/.test_data/assemblies/chm13/cyto.bed

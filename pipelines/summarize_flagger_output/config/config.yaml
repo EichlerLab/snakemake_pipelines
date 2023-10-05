@@ -7,16 +7,17 @@ flagger_flags:
   - Unk
   - Hap
 
-samples_to_plot: hgsvc_batch1_test  # Comment out line to plot all samples
+sample_subsets:
+  hgsvc_batch1_test:
+    - GM18989
+    - GM19129
+    - GM19331
 
-hgsvc_batch1_test:
-  - GM18989
-  - GM19129
-  - GM20355
-
-chm13t2t:
-  fai: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai
-  gaps: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/T2T-CHM13v2_gap.bed
-  sd: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd_frac_match.bed
-  tandem_repeats: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/chm13_t2t_trf.bed
-  chrom_bands: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/cyto.bed
+ref_files:
+  chm13t2t:
+    fai: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai
+    gaps: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/T2T-CHM13v2_gap.bed
+    sd: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/flagger/chm13v2.0.sd_frac_match.bed
+    tandem_repeats: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/chm13_t2t_trf.bed
+    chrom_bands: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/anno/cyto.bed
+    
