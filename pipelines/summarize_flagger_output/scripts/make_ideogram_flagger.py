@@ -21,9 +21,6 @@ ASM_COLORS = {
     "Unk": (0.502, 0.502, 0.502),
     "Err": (0.635, 0, 0.145),
 }
-BINS_BED = BedTool(
-    "/net/eichler/vol26/projects/flagger_tmp/nobackups/saffire/CHM13_v2.0/visualization_pipeline/windows.bed"
-)
 
 conf = snakemake.config
 ref = conf["reference"]
@@ -40,14 +37,17 @@ df_tr = pd.read_csv(
 
 flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
+bins_bed = BedTool(snakemake.input.bed)
 outfiles = snakemake.output
 
 
 def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
     # and label_col from the df and divides bins in half, use original df
-    mpl.rcParams.update({"font.size": 8})
-    asms = df["ASM"].unique()
+
+    mpl.rcParams.update({'font.size':8})
+    asms = sorted(df['ASM'].unique(), reverse=True)
+
     max_bar_height = len(samples) * len(asms)
     df = all_samples_df
 
@@ -79,27 +79,29 @@ def ideo_cb(df, chrom, ax, fig):
     ax.set_yticklabels([0, max_bar_height])
 
     # Show legend
-    if len(asms) > 1 and chrom == "chrY":
+    if len(asms) > 1:
         h, l = ax.get_legend_handles_labels()
-        d = {l[i]: h[i] for i in range(len(h))}
-        asms_for_legend = list(asms)[::-1]
-        ax.legend(
-            labels=asms_for_legend,
-            handles=[d[x] for x in asms_for_legend],
-            loc="center left",
-            bbox_to_anchor=(-1.5, 0.35),
-        )
+        legend_d.update({l[i]:h[i] for i in range(len(h))})
+
+        if chrom == 'chrY':
+            asms_for_legend = asms[::-1]
+            ax.legend(
+                labels=asms_for_legend, handles=[legend_d[x] for x in asms_for_legend],
+                loc='center left', bbox_to_anchor=(-1.5, 0.35)
+            )
 
 
 # asm_dict: All binned blocks (#CHROM, POS, END) for each Flag (Err, Dup, Hap, Col, Unk).
 # Bedtools intersect each Flag of each sample w coord windows
 # and concat to the overall df for the Flag
 all_samples_df = pd.DataFrame()
+legend_d = {}
 
 for infile in infiles:
     # print(f'Reading in {infile}')
     sample = os.path.basename(infile).split(".")[0]  # Since PAFs are named {sample}.paf
     print(f"Sample {sample}")
+   
     df = pd.read_csv(
         infile,
         sep="\t",
@@ -116,7 +118,10 @@ for infile in infiles:
         if not asm:
             continue
         asm_bed = BedTool.from_dataframe(df.loc[df["ASM"] == asm])
-        asm_df = BINS_BED.intersect(asm_bed, wa=True, u=True).to_dataframe()
+        asm_df = bins_bed.intersect(
+            asm_bed, wa=True, u=True
+        ).to_dataframe()
+
         if asm_df.empty:
             continue
         asm_df.columns = ["#CHROM", "POS", "END"]
