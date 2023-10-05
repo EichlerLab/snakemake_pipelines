@@ -79,18 +79,20 @@ rule liftover_coords:
         awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.paf}
         """
 
+
 # Coordinate windows for make_ideogram binning
 rule make_windows_bed:
     input:
-        fai = config["ref_files"][REFERENCE]["fai"],
+        fai=config["ref_files"][REFERENCE]["fai"],
     output:
         bed="temp/windows.bed",
-    threads: 1,
+    threads: 1
     resources:
         mem=4,
         hrs=1,
     script:
         "scripts/make_windows_bed.py"
+
 
 rule make_ideogram:
     input:
