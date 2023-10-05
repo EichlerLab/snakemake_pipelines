@@ -81,6 +81,8 @@ rule liftover_coords:
 
 # Coordinate windows for make_ideogram binning
 rule make_windows_bed:
+    input:
+        fai = config["ref_files"][REFERENCE]["fai"],
     output:
         bed="temp/windows.bed",
     threads: 1,

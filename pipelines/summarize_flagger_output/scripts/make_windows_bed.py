@@ -7,7 +7,7 @@ BIN_SIZE = 1000000
 conf = snakemake.config
 out_fname = snakemake.output.bed
 
-fai_filename = conf[conf['reference']]['fai']
+fai_filename = snakemake.input.fai
 
 with open(out_fname, 'w') as out_f:
     with open(fai_filename) as f:
