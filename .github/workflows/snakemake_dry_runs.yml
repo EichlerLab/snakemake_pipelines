@@ -37,5 +37,5 @@ jobs:  # Add dry run jobs for other workflows
         working-directory: pipelines/assembly_eval
         # Install dependencies and dry run
         run: |
-          python -m pip install snakemake pandas pysam
+          python -m pip install snakemake pandas pysam Bio
           snakemake -n --cores 1 --configfile .test/config.yaml
