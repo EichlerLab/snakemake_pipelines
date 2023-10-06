@@ -186,14 +186,17 @@ localrules:
     trigger_steps,
     getFinal,
 
+
 rule all_eval:
     input:
-        expand("{sample}/assembly_eval/{tech}/{type_map}/final_qc.bed",
+        expand(
+            "{sample}/assembly_eval/{tech}/{type_map}/final_qc.bed",
             zip,
             sample=expand_series["sample"],
             tech=expand_series["tech"],
             type_map=expand_series["type_map"],
         ),
+
 
 rule all_align:
     input:
@@ -204,6 +207,7 @@ rule all_align:
             tech=expand_series["tech"],
             type_map=expand_series["type_map"],
         ),
+
 
 rule all_nucfreq:
     input:
@@ -466,9 +470,9 @@ rule filter_rustybam:
         hrs=12,
     run:
         bed_df = pd.read_csv(input.bed, sep="\t", header=0)
-        bed_df["second_highest"] = bed_df.iloc[:,][
-            ["A", "G", "T", "C"]
-        ].apply(lambda row: row.nlargest(2).values[-1], axis=1)
+        bed_df["second_highest"] = bed_df.iloc[:,][["A", "G", "T", "C"]].apply(
+            lambda row: row.nlargest(2).values[-1], axis=1
+        )
         collapse_df = bed_df.loc[bed_df["second_highest"] > 5]
         collapse_df = collapse_df[["#chr", "start", "end"]]
         collapse_df = collapse_df.assign(type_err="collapse")
@@ -672,7 +676,7 @@ checkpoint splitBeds:
         bed_df = bed_df.sample(frac=1).reset_index(drop=True)
         groups = bed_df.groupby(np.arange(len(bed_df.index)) // int(params.img_count))
         count = 0
-        for (splitno, split) in groups:
+        for splitno, split in groups:
             split.to_csv(
                 params.dirct + "contigs_" + str(count) + ".bed",
                 header=None,
