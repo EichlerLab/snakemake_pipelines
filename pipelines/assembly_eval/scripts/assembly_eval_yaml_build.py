@@ -33,7 +33,7 @@ while addSample == True:
     addRegion = True
     while addRegion == True:
         region = input("name region, if none press enter: ")
-        if region == '':
+        if region == "":
             break
         bed = input("Path to bed file of contigs in named region: ")
         SM_dict[SM]["regions"][region] = bed
