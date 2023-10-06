@@ -1,0 +1,12 @@
+HG00733-verkko:
+  asm_h1: /home/runner/work/general_pipelines/general_pipelines/.test_data/HG00733.ps-sseq.verkko.hap1.fasta
+  asm_h2: /home/runner/work/general_pipelines/general_pipelines/.test_data/HG00733.ps-sseq.verkko.hap2.fasta
+  fofns:
+    HiFi: /home/runner/work/general_pipelines/general_pipelines/.test_data/HG00733_PB.fofn
+  genBed: false
+  nuc_opts: -y 100
+  regions: {}
+  repeat_mask: false
+  species: human
+  type_map:
+    HiFi: winnowmap
