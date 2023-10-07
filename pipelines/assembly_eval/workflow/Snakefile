@@ -9,7 +9,7 @@ import re
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 
-configfile: "config/config.yaml"
+configfile: "../config/config.yaml"
 
 
 SAMPLES = list(config.keys())

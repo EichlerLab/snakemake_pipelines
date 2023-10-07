@@ -1,10 +1,10 @@
 import pandas as pd
 
 
-configfile: "config/config.yaml"
+configfile: "../config/config.yaml"
 
 
-MANIFEST = config.get("manifest", "config/manifest.tab")
+MANIFEST = config.get("manifest", "../config/manifest.tab")
 REFERENCE = config["reference"]
 FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
 SUBGROUP_DICT = config.get("sample_subsets", {})
