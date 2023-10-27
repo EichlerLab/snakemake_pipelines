@@ -37,7 +37,11 @@ flagger_category = snakemake.wildcards.flag
 infiles = snakemake.input.paf
 bins_bed = BedTool(snakemake.input.bed)
 outfiles = snakemake.output
+plot_bed = BedTool(snakemake.input.plot_regions) if (
+    snakemake.input.plot_regions
+) else None
 
+BAR_HEIGHT_NUM_BASES = plot_bed is not None
 
 def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
@@ -45,19 +49,26 @@ def ideo_cb(df, chrom, ax, fig):
 
     mpl.rcParams.update({"font.size": 8})
     asms = sorted(df["ASM"].unique(), reverse=True)
-
-    max_bar_height = len(samples) * len(asms)
     df = all_samples_df
+
+    if not BAR_HEIGHT_NUM_BASES:
+        max_bar_height = len(samples) * len(asms)
 
     # Subset to chromosome
     df_chrom = df.loc[df["#CHROM"] == chrom].copy()
+    if BAR_HEIGHT_NUM_BASES:
+        assert len(samples) == 1
+        max_bar_height = df_chrom.groupby(['ASM', 'POS']).agg({"OVERLAP":"sum"}).reset_index()["OVERLAP"].max()
     for start_pos in df_chrom["POS"].unique():
         start_height = 0
         for j, asm in enumerate(asms):
-            n_samples = len(
-                df_chrom[(df_chrom["POS"] == start_pos) & (df_chrom["ASM"] == asm)]
-            )
-            sample_height = n_samples / max_bar_height
+            curr_rows = df_chrom[(df_chrom["POS"] == start_pos) & (df_chrom["ASM"] == asm)]
+            if BAR_HEIGHT_NUM_BASES:
+                n_bases_overlap = curr_rows["OVERLAP"].max()
+                sample_height = n_bases_overlap / max_bar_height
+            else:
+                n_samples = len(curr_rows)
+                sample_height = n_samples / max_bar_height
             b = ax.bar(
                 start_pos,
                 width=BIN_SIZE * 0.8,
@@ -72,9 +83,12 @@ def ideo_cb(df, chrom, ax, fig):
     # Need small y_max in order for ideogram to show, but set y labels as
     # actual number of samples
     ax.set_ylim(0, 1)
-    ax.set_ylabel("# Samples")
+    ax.set_ylabel("# Kilobases" if (BAR_HEIGHT_NUM_BASES) else '# Samples')
     ax.set_yticks([0, 1])
-    ax.set_yticklabels([0, max_bar_height])
+    y_max = 'N/A'
+    if max_bar_height and not pd.isna(max_bar_height):
+        y_max = f'{int(max_bar_height/1000.0):,}' if (BAR_HEIGHT_NUM_BASES) else max_bar_height
+    ax.set_yticklabels([0, y_max])
 
     # Show legend
     if len(asms) > 1:
@@ -118,14 +132,27 @@ for infile in infiles:
         if not asm:
             continue
         asm_bed = BedTool.from_dataframe(df.loc[df["ASM"] == asm])
-        asm_df = bins_bed.intersect(asm_bed, wa=True, u=True).to_dataframe()
+        if BAR_HEIGHT_NUM_BASES:
+            asm_bed_filtered = asm_bed.intersect(plot_bed)
+            asm_df = bins_bed.intersect(asm_bed_filtered, wo=True).to_dataframe(names=[
+                '#CHROM', 'POS', 'END', '#CHROM_B', 'POS_B', 'END_B',
+                'ASM', 'OVERLAP'
+            ])
+            asm_df = asm_df.groupby([
+                '#CHROM', 'POS', 'END'
+            ]).agg({'OVERLAP':'sum'}).reset_index()
+        else:
+            asm_df = bins_bed.intersect(asm_bed, wa=True, u=True).to_dataframe()
+            asm_df.columns = ["#CHROM", "POS", "END"]
+        asm_df["ASM"] = asm
+        asm_df["SAMPLE"] = sample
 
         if asm_df.empty:
             continue
-        asm_df.columns = ["#CHROM", "POS", "END"]
-        asm_df["ASM"] = asm
-        asm_df["SAMPLE"] = sample
+
         all_samples_df = pd.concat([all_samples_df, asm_df])
+if all_samples_df.empty:
+    sys.exit()
 
 print(f"Making plot for Flagger category {flagger_category}")
 samples = sorted(all_samples_df["SAMPLE"].unique())

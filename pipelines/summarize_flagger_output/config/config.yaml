@@ -12,7 +12,7 @@ sample_subsets:
     - GM18989
     - GM19129
     - GM19331
-
+plot_regions: GM18989_winnowmap_vs_minimap_contigs_asm_differs_lifted_over.bed
 ref_files:
   chm13t2t:
     fai: /net/eichler/vol28/eee_shared/assemblies/CHM13/T2T/v2.0/T2T-CHM13v2.fasta.fai

@@ -1,13 +1,15 @@
 import pandas as pd
 
 
-configfile: "../config/config.yaml"
+configfile: "config/config.yaml"
 
 
-MANIFEST = config.get("manifest", "../config/manifest.tab")
+MANIFEST = config.get("manifest", "config/manifest.tab")
 REFERENCE = config["reference"]
 FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
 SUBGROUP_DICT = config.get("sample_subsets", {})
+SUBGROUP_DICT.update({"all":"all"})
+PLOT_REGIONS = config.get("plot_regions", "")
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col=["SAMPLE"])
 
 
@@ -40,7 +42,7 @@ def ideo_ref_files(wildcards):
 
 wildcard_constraints:
     sample="|".join(manifest_df.index),
-    subgroup="|".join(SUBGROUP_DICT | {"all": "all"}),
+    subgroup="|".join(SUBGROUP_DICT),
     ext="|".join(["png", "svg"]),
     flag="|".join(FLAGGER_FLAGS + ["all"]),
 
@@ -50,7 +52,7 @@ rule all:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
             "results/plots/{subgroup}/{flag}.{ext}",
-            subgroup=SUBGROUP_DICT | {"all": "all"},
+            subgroup=SUBGROUP_DICT,
             flag=FLAGGER_FLAGS + ["all"],
             ext=["png", "svg"],
         ),
@@ -91,7 +93,7 @@ rule make_windows_bed:
         mem=4,
         hrs=1,
     script:
-        "scripts/make_windows_bed.py"
+        "../scripts/make_windows_bed.py"
 
 
 rule make_ideogram:
@@ -99,6 +101,7 @@ rule make_ideogram:
         unpack(ideo_ref_files),
         paf=find_converted_pafs,
         bed=rules.make_windows_bed.output.bed,
+        plot_regions=PLOT_REGIONS
     output:
         png="results/plots/{subgroup}/{flag}.png",
         svg="results/plots/{subgroup}/{flag}.svg",
