@@ -91,7 +91,7 @@ rule make_windows_bed:
         mem=4,
         hrs=1,
     script:
-        "scripts/make_windows_bed.py"
+        "../scripts/make_windows_bed.py"
 
 
 rule make_ideogram:
