@@ -1,13 +1,15 @@
 import pandas as pd
 
 
-configfile: "../config/config.yaml"
+configfile: "config/config.yaml"
 
 
-MANIFEST = config.get("manifest", "../config/manifest.tab")
+MANIFEST = config.get("manifest", "config/manifest.tab")
 REFERENCE = config["reference"]
 FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
+FLAGGER_FLAGS.append("all")
 SUBGROUP_DICT = config.get("sample_subsets", {})
+SUBGROUP_DICT['all'] = 'all'
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col=["SAMPLE"])
 
 
@@ -40,9 +42,9 @@ def ideo_ref_files(wildcards):
 
 wildcard_constraints:
     sample="|".join(manifest_df.index),
-    subgroup="|".join(SUBGROUP_DICT | {"all": "all"}),
+    subgroup="|".join(SUBGROUP_DICT),
     ext="|".join(["png", "svg"]),
-    flag="|".join(FLAGGER_FLAGS + ["all"]),
+    flag="|".join(FLAGGER_FLAGS),
 
 
 rule all:
@@ -50,8 +52,8 @@ rule all:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
             "results/plots/{subgroup}/{flag}.{ext}",
-            subgroup=SUBGROUP_DICT | {"all": "all"},
-            flag=FLAGGER_FLAGS + ["all"],
+            subgroup=SUBGROUP_DICT,
+            flag=FLAGGER_FLAGS,
             ext=["png", "svg"],
         ),
 
