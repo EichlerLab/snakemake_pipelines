@@ -22,6 +22,10 @@ def find_flagger_bed(wildcards):
     return manifest_df.at[wildcards.sample, "FLAGGER_BED"]
 
 
+def find_all_flagger_beds(wildcards):
+    return expand(find_flagger_bed, wildcards=wildcards, sample=manifest_df.index)
+
+
 def find_per_sample_flagger_summaries(wildcards):
     return expand(rules.summarize_bed_per_sample.output.tsv, sample=manifest_df.index)
 
@@ -56,6 +60,7 @@ rule all:
             flag=FLAGGER_FLAGS,
             ext=["png", "svg"],
         ),
+        "results/flagger_summary/asm_bar_chart.png"
 
 
 rule liftover_coords:
@@ -134,6 +139,17 @@ rule summarize_bed_per_sample:
         df.insert(0, "Sample", f"{wildcards.sample}")
         df.to_csv(output.tsv, sep="\t", index=False)
 
+rule make_bar_chart:
+    input:
+        beds=find_all_flagger_beds
+    output:
+        tsv="results/flagger_summary/asm_bar_chart.png",
+    threads: 1
+    resources:
+        mem=12,
+        hrs=10,
+    script:
+        "touch results/flagger_summary/asm_bar_chart.png"
 
 rule combine_summaries:
     input:
