@@ -22,11 +22,9 @@ def find_flagger_bed(wildcards):
     return manifest_df.at[wildcards.sample, "FLAGGER_BED"]
 
 
-def find_all_flagger_beds(wildcards):
-    return manifest_df['FLAGGER_BED']
+def find_bed_per_sample(wildcards):
+    return {z: manifest_df.loc[z]["FLAGGER_BED"] for z in manifest_df.index}
 
-def find_all_samples(wildcards):
-    return manifest_df.index
 
 def find_per_sample_flagger_summaries(wildcards):
     return expand(rules.summarize_bed_per_sample.output.tsv, sample=manifest_df.index)
@@ -144,9 +142,7 @@ rule summarize_bed_per_sample:
 
 rule make_bar_chart:
     input:
-        beds=find_all_flagger_beds
-    params:
-        samples=find_all_samples
+        unpack(find_bed_per_sample)
     output:
         tsv_all="results/flagger_summary/asm_bar_chart.png",
         tsv_nohap="results/flagger_summary/asm_bar_chart_nohap.png",

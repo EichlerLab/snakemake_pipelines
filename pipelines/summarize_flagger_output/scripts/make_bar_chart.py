@@ -4,12 +4,12 @@ all_df = pd.DataFrame()
 
 import matplotlib.pyplot as plt
 
-for i, flagger_bed in enumerate(snakemake.input.beds):
+for sample, flagger_bed in snakemake.input.items():
     df = pd.read_csv(flagger_bed, sep='\t', usecols=[0,1,2,3], names=['#chrom', 'start', 'end', 'asm_type'])
     df['len'] = (df['end'] - df['start']) / 1e6
     out_df = df.groupby(['asm_type']).sum().reset_index()[['len', 'asm_type']].T
     out_df = out_df.rename(columns={col : f'{out_df[col].iloc[1]}' for col in out_df.columns}).iloc[0:1]
-    out_df['sample'] = snakemake.params.samples[i]
+    out_df['sample'] = sample
     out_df = out_df.set_index('sample')
     all_df = pd.concat([all_df, out_df])
 
