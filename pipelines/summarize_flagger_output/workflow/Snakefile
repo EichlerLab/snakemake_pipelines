@@ -23,7 +23,12 @@ def find_flagger_bed(wildcards):
 
 
 def find_bed_per_sample(wildcards):
-    return {z: manifest_df.loc[z]["FLAGGER_BED"] for z in manifest_df.index}
+    if wildcards.subgroup == "all":
+        return {z: manifest_df.loc[z]["FLAGGER_BED"] for z in manifest_df.index}
+    else:
+        return {
+            z: manifest_df.loc[z]["FLAGGER_BED"] for z in SUBGROUP_DICT[wildcards.subgroup]
+        }
 
 
 def find_per_sample_flagger_summaries(wildcards):
@@ -60,8 +65,14 @@ rule all:
             flag=FLAGGER_FLAGS,
             ext=["png", "svg"],
         ),
-        "results/flagger_summary/asm_bar_chart.png",
-        "results/flagger_summary/asm_bar_chart_nohap.png"
+        expand(
+            "results/flagger_summary/asm_bar_chart_{subgroup}.png",
+            subgroup=SUBGROUP_DICT
+        ),
+        expand(
+            "results/flagger_summary/asm_bar_chart_nohap_{subgroup}.png",
+            subgroup=SUBGROUP_DICT
+        )
 
 
 rule liftover_coords:
@@ -144,8 +155,8 @@ rule make_bar_chart:
     input:
         unpack(find_bed_per_sample)
     output:
-        tsv_all="results/flagger_summary/asm_bar_chart.png",
-        tsv_nohap="results/flagger_summary/asm_bar_chart_nohap.png",
+        tsv_all="results/flagger_summary/asm_bar_chart_{subgroup}.png",
+        tsv_nohap="results/flagger_summary/asm_bar_chart_nohap_{subgroup}.png",
     threads: 1
     resources:
         mem=12,
