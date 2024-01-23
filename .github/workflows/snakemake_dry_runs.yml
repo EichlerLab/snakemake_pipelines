@@ -15,6 +15,8 @@ jobs:  # Add dry run jobs for other workflows
         working-directory: pipelines/vcf_merge
         # Install dependencies and dry run
         run: |
+          python --version
+          python3 --version
           python -m pip install --upgrade snakemake==8.3.1 pandas pybedtools
           snakemake -n --cores 1 --configfile .test/config.yaml
   dry-run-summarize-flagger_output:
