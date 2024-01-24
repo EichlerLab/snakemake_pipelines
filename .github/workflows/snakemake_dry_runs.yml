@@ -20,7 +20,7 @@ jobs:  # Add dry run jobs for other workflows
         run: |
           python --version
           python -m pip install snakemake pandas pybedtools
-          snakemake -n --cores 1 --default-resources mem_mb=1000 --configfile .test/config.yaml
+          snakemake -n --cores 1 --default-resources mem_mb=1000 disk_mb=100 --configfile .test/config.yaml
   dry-run-summarize-flagger_output:
     runs-on: ubuntu-latest
     steps:
