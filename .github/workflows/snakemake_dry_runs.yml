@@ -19,7 +19,7 @@ jobs:  # Add dry run jobs for other workflows
         # Install dependencies and dry run
         run: |
           python --version
-          python -m pip install snakemake pandas pybedtools
+          python -m pip install snakemake==8.1.2 pandas pybedtools
           snakemake -n --cores 1 --configfile .test/config.yaml
   dry-run-summarize-flagger_output:
     runs-on: ubuntu-latest
