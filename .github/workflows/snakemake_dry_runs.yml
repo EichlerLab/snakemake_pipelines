@@ -11,8 +11,8 @@ jobs:  # Add dry run jobs for other workflows
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11.7'
+        with:
+          python-version: '3.11.7'
       - name: Snakemake dry run for vcf_merge
         # Directory that has Snakefile and config
         working-directory: pipelines/vcf_merge
