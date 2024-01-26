@@ -1,0 +1,3 @@
+SAMPLE	BAM	TYPE
+AG16778	/net/eichler/vol28/projects/long_read_archive/nobackups/clinical/AG16778/raw_data/PacBio_HiFi/subread/m64076_230604_144435.subreads.bam	subreads
+AG16778	/net/eichler/vol28/projects/long_read_archive/nobackups/clinical/AG16778/raw_data/PacBio_HiFi/m64076_230601_195227-bc2042.hifi_reads.bam	ccs
