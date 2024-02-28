@@ -184,20 +184,6 @@ rule make_bar_chart:
     input:
         unpack(find_bed_per_sample),
     output:
-        tsv_all="results/flagger_summary/asm_bar_chart_{subgroup}.png",
-        tsv_nohap="results/flagger_summary/asm_bar_chart_nohap_{subgroup}.png",
-    threads: 1
-    resources:
-        mem=12,
-        hrs=10,
-    script:
-        "../scripts/make_bar_chart.py"
-
-
-rule make_bar_chart:
-    input:
-        unpack(find_bed_per_sample),
-    output:
         tsv_all="results/flagger_summary/asm_bar_chart_{subgroup}-filt{filt}.png",
         tsv_nohap="results/flagger_summary/asm_bar_chart_nohap_{subgroup}-filt{filt}.png",
     threads: 1
