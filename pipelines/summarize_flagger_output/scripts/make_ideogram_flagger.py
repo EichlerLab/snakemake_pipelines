@@ -110,8 +110,12 @@ for infile in infiles:
         names=["#CHROM", "POS", "END", "ASM"],
     )
     df["ASM"] = df["ASM"].apply(lambda x: x.split(":")[-1].split("_")[0])
+    df['LEN'] = df["END"] - df['POS']
+    df = df.loc[df['LEN'] >= int(snakemake.wildcards.filt)].copy()
     if flagger_category == "all":
         iter_range = df["ASM"].unique()
+    elif flagger_category == "nohap":
+        iter_range = [x for x in df["ASM"].unique() if x != "Hap"]
     else:
         iter_range = [flagger_category]
     for asm in iter_range:
