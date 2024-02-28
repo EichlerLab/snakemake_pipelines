@@ -4,10 +4,10 @@ import gzip
 import shutil
 
 
-configfile: "config/config.yaml"
+configfile: "../config/config.yaml"
 
 
-MANIFEST = config.get("MANIFEST", "config/manifest.tab")
+MANIFEST = config.get("MANIFEST", "../config/manifest.tab")
 REF = config["REF"]
 
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="SAMPLE")

@@ -82,6 +82,7 @@ rule all:
         expand("results/converted_bed/{sample}.bed", sample=manifest_df.index),
 
 
+
 rule liftover_coords:
     input:
         paf=find_paf,
@@ -106,7 +107,8 @@ rule liftover_coords:
         """
 
 
-rule liftover_coords:
+
+rule liftover_bed:
     input:
         paf=results.liftover_coords.output.paf,
     output:
@@ -179,6 +181,18 @@ rule summarize_bed_per_sample:
         df.insert(0, "Sample", f"{wildcards.sample}")
         df.to_csv(output.tsv, sep="\t", index=False)
 
+rule make_bar_chart:
+    input:
+        unpack(find_bed_per_sample)
+    output:
+        tsv_all="results/flagger_summary/asm_bar_chart_{subgroup}.png",
+        tsv_nohap="results/flagger_summary/asm_bar_chart_nohap_{subgroup}.png",
+    threads: 1
+    resources:
+        mem=12,
+        hrs=10,
+    script:
+        "../scripts/make_bar_chart.py"
 
 rule make_bar_chart:
     input:
@@ -211,3 +225,4 @@ rule combine_summaries:
         out_df = pd.concat(sample_dfs)
 
         out_df.to_csv(output.tsv, sep="\t", index=False)
+
