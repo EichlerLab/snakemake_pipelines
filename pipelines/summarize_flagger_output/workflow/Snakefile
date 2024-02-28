@@ -123,7 +123,7 @@ rule liftover_bed:
         hrs=2,
     shell:
         """
-        cut -f 1,3,4,13 {input.paf} | sed 's/id:Z://' | sed 's/_TO.*//' | awk '{{if (NF == 4) print}}' > {output.bed}
+        cut -f 1,3,4,13 {input.paf} | sed 's/id:Z://' | sed 's/_TO.*//' | awk '{{if (NF == 4) print}}' | sort -k1,1 -k2,2n > {output.bed}
         """
 
 
