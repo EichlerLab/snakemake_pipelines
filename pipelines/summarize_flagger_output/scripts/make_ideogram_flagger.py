@@ -22,8 +22,6 @@ ASM_COLORS = {
     "Err": (0.635, 0, 0.145),
 }
 
-conf = snakemake.config
-ref = conf["reference"]
 fai_filename = snakemake.input.fai
 df_band = pd.read_csv(snakemake.input.chrom_bands, sep="\t")
 df_gap = pd.read_csv(snakemake.input.gaps, sep="\t")
@@ -45,8 +43,8 @@ def ideo_cb(df, chrom, ax, fig):
     # SVPop removes all columns except #CHROM, POS, END,
     # and label_col from the df and divides bins in half, use original df
 
-    mpl.rcParams.update({'font.size':8})
-    asms = sorted(df['ASM'].unique(), reverse=True)
+    mpl.rcParams.update({"font.size": 8})
+    asms = sorted(df["ASM"].unique(), reverse=True)
 
     max_bar_height = len(samples) * len(asms)
     df = all_samples_df
@@ -81,13 +79,15 @@ def ideo_cb(df, chrom, ax, fig):
     # Show legend
     if len(asms) > 1:
         h, l = ax.get_legend_handles_labels()
-        legend_d.update({l[i]:h[i] for i in range(len(h))})
+        legend_d.update({l[i]: h[i] for i in range(len(h))})
 
-        if chrom == 'chrY':
+        if chrom == "chrY":
             asms_for_legend = asms[::-1]
             ax.legend(
-                labels=asms_for_legend, handles=[legend_d[x] for x in asms_for_legend],
-                loc='center left', bbox_to_anchor=(-1.5, 0.35)
+                labels=asms_for_legend,
+                handles=[legend_d[x] for x in asms_for_legend],
+                loc="center left",
+                bbox_to_anchor=(-1.5, 0.35),
             )
 
 
@@ -101,7 +101,7 @@ for infile in infiles:
     # print(f'Reading in {infile}')
     sample = os.path.basename(infile).split(".")[0]  # Since PAFs are named {sample}.paf
     print(f"Sample {sample}")
-   
+
     df = pd.read_csv(
         infile,
         sep="\t",
@@ -110,17 +110,19 @@ for infile in infiles:
         names=["#CHROM", "POS", "END", "ASM"],
     )
     df["ASM"] = df["ASM"].apply(lambda x: x.split(":")[-1].split("_")[0])
+    df['LEN'] = df["END"] - df['POS']
+    df = df.loc[df['LEN'] >= int(snakemake.wildcards.filt)].copy()
     if flagger_category == "all":
         iter_range = df["ASM"].unique()
+    elif flagger_category == "nohap":
+        iter_range = [x for x in df["ASM"].unique() if x != "Hap"]
     else:
         iter_range = [flagger_category]
     for asm in iter_range:
         if not asm:
             continue
         asm_bed = BedTool.from_dataframe(df.loc[df["ASM"] == asm])
-        asm_df = bins_bed.intersect(
-            asm_bed, wa=True, u=True
-        ).to_dataframe()
+        asm_df = bins_bed.intersect(asm_bed, wa=True, u=True).to_dataframe()
 
         if asm_df.empty:
             continue

@@ -7,7 +7,11 @@ configfile: "config/config.yaml"
 MANIFEST = config.get("manifest", "config/manifest.tab")
 REFERENCE = config["reference"]
 FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
+FLAGGER_FLAGS.append("all")
+FLAGGER_FLAGS.append("nohap")
 SUBGROUP_DICT = config.get("sample_subsets", {})
+SUBGROUP_DICT["all"] = "all"
+FLAGGER_LEN_FILTER = config.get("flagger_len_filter", 0)
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col=["SAMPLE"])
 
 
@@ -18,6 +22,16 @@ def find_paf(wildcards):
 
 def find_flagger_bed(wildcards):
     return manifest_df.at[wildcards.sample, "FLAGGER_BED"]
+
+
+def find_bed_per_sample(wildcards):
+    if wildcards.subgroup == "all":
+        return {z: manifest_df.loc[z]["FLAGGER_BED"] for z in manifest_df.index}
+    else:
+        return {
+            z: manifest_df.loc[z]["FLAGGER_BED"]
+            for z in SUBGROUP_DICT[wildcards.subgroup]
+        }
 
 
 def find_per_sample_flagger_summaries(wildcards):
@@ -40,20 +54,32 @@ def ideo_ref_files(wildcards):
 
 wildcard_constraints:
     sample="|".join(manifest_df.index),
-    subgroup="|".join(SUBGROUP_DICT | {"all": "all"}),
+    subgroup="|".join(SUBGROUP_DICT),
     ext="|".join(["png", "svg"]),
-    flag="|".join(FLAGGER_FLAGS + ["all"]),
+    flag="|".join(FLAGGER_FLAGS),
 
 
 rule all:
     input:
         "results/flagger_summary/flagger_summary.tsv",
         expand(
-            "results/plots/{subgroup}/{flag}.{ext}",
-            subgroup=SUBGROUP_DICT | {"all": "all"},
-            flag=FLAGGER_FLAGS + ["all"],
+            "results/plots/{subgroup}/{flag}-filt{filt}.{ext}",
+            subgroup=SUBGROUP_DICT,
+            flag=FLAGGER_FLAGS,
             ext=["png", "svg"],
+            filt=FLAGGER_LEN_FILTER,
         ),
+        expand(
+            "results/flagger_summary/asm_bar_chart_{subgroup}-filt{filt}.png",
+            subgroup=SUBGROUP_DICT,
+            filt=FLAGGER_LEN_FILTER,
+        ),
+        expand(
+            "results/flagger_summary/asm_bar_chart_nohap_{subgroup}-filt{filt}.png",
+            subgroup=SUBGROUP_DICT,
+            filt=FLAGGER_LEN_FILTER,
+        ),
+        expand("results/converted_bed/{sample}.bed", sample=manifest_df.index),
 
 
 rule liftover_coords:
@@ -61,7 +87,7 @@ rule liftover_coords:
         paf=find_paf,
         flagger_bed=find_flagger_bed,
     output:
-        paf="converted_paf/{sample}.paf",
+        paf="results/converted_paf/{sample}.paf",
     threads: 1
     envmodules:
         "modules",
@@ -79,16 +105,41 @@ rule liftover_coords:
         awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.paf}
         """
 
+
+rule liftover_coords:
+    input:
+        paf=results.liftover_coords.output.paf,
+    output:
+        bed="results/converted_bed/{sample}.bed",
+    threads: 1
+    envmodules:
+        "modules",
+        "modules-init",
+        "modules-gs/prod",
+        "modules-eichler/prod",
+        "rustybam/0.1.27",
+    resources:
+        mem=128,
+        hrs=2,
+    shell:
+        """
+        cut -f 1,3,4,13 {input.paf} | sed 's/id:Z://' | sed 's/_TO.*//' | awk '{if (NF == 4) print}' > {output.bed}
+        """
+
+
 # Coordinate windows for make_ideogram binning
 rule make_windows_bed:
+    input:
+        fai=config["ref_files"][REFERENCE]["fai"],
     output:
         bed="temp/windows.bed",
-    threads: 1,
+    threads: 1
     resources:
         mem=4,
         hrs=1,
     script:
-        "scripts/make_windows_bed.py"
+        "../scripts/make_windows_bed.py"
+
 
 rule make_ideogram:
     input:
@@ -96,8 +147,8 @@ rule make_ideogram:
         paf=find_converted_pafs,
         bed=rules.make_windows_bed.output.bed,
     output:
-        png="results/plots/{subgroup}/{flag}.png",
-        svg="results/plots/{subgroup}/{flag}.svg",
+        png="results/plots/{subgroup}/{flag}-filt{filt}.png",
+        svg="results/plots/{subgroup}/{flag}-filt{filt}.svg",
     threads: 1
     resources:
         mem=12,
@@ -127,6 +178,20 @@ rule summarize_bed_per_sample:
         df = df.groupby("ASM").sum()[["Total"]].T
         df.insert(0, "Sample", f"{wildcards.sample}")
         df.to_csv(output.tsv, sep="\t", index=False)
+
+
+rule make_bar_chart:
+    input:
+        unpack(find_bed_per_sample),
+    output:
+        tsv_all="results/flagger_summary/asm_bar_chart_{subgroup}-filt{filt}.png",
+        tsv_nohap="results/flagger_summary/asm_bar_chart_nohap_{subgroup}-filt{filt}.png",
+    threads: 1
+    resources:
+        mem=12,
+        hrs=10,
+    script:
+        "../scripts/make_bar_chart.py"
 
 
 rule combine_summaries:
