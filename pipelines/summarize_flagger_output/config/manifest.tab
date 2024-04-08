@@ -1,4 +1,4 @@
 SAMPLE	PAF	FLAGGER_BED
-GM18989	/home/runner/work/general_pipelines/general_pipelines/.test_data/paf/GM18989-verkko_concat.paf	/home/runner/work/general_pipelines/general_pipelines/.test_data/results/flagger/GM18989-verkko.verkko.alt_removed.flagger_final.bed
-GM19129	/home/runner/work/general_pipelines/general_pipelines/.test_data/paf/GM19129-verkko_concat.paf	/home/runner/work/general_pipelines/general_pipelines/.test_data/results/flagger/GM19129-verkko.verkko.alt_removed.flagger_final.bed
-GM19331	/home/runner/work/general_pipelines/general_pipelines/.test_data/paf/GM19331-verkko_concat.paf	/home/runner/work/general_pipelines/general_pipelines/.test_data/results/flagger/GM19331-verkko.verkko.alt_removed.flagger_final.bed
+GM18989	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/paf/GM18989-verkko_concat.paf	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/results/flagger/GM18989-verkko.verkko.alt_removed.flagger_final.bed
+GM19129	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/paf/GM19129-verkko_concat.paf	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/results/flagger/GM19129-verkko.verkko.alt_removed.flagger_final.bed
+GM19331	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/paf/GM19331-verkko_concat.paf	/home/runner/work/snakemake_pipelines/snakemake_pipelines/.test_data/results/flagger/GM19331-verkko.verkko.alt_removed.flagger_final.bed
