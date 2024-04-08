@@ -211,3 +211,5 @@ rule combine_summaries:
         out_df = pd.concat(sample_dfs)
 
         out_df.to_csv(output.tsv, sep="\t", index=False)
+
+rule
