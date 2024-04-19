@@ -1,0 +1,193 @@
+import pandas as pd
+import os, sys
+
+configfile: "config.yaml"
+
+
+MANIFEST = config.get("MANIFEST", "manifest.tab")
+SNIFFLES_VERSION = config.get("SNIFFLES_VERSION", "2.3.4")
+CUTESV_VERSION = config.get("CUTESV_VERSION", "2.1.1")
+ANNOTATIONS_TR = config.get("ANNOTATION", "/net/eichler/vol28/home/iwong1/nobackups/sniffles/human_GRCh38_no_alt_analysis_set.trf.bed") # tandem repeats
+NTHREADS = config.get("NTHREADS", 2)
+REF = config.get("REF", "/net/eichler/vol28/eee_shared/assemblies/hg38/no_alt/hg38.no_alt.fa")
+TRF_REGIONS = config.get("TRF_REGION", "/net/eichler/vol28/software/pipelines/pbsv/anno/hg38_trf_regions.bed")
+PBSV_VERSION = config.get("PBSV_VERSION", "2.3.2")
+
+manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="SAMPLE")
+
+
+def get_bam(wildcards):
+    return manifest_df.at[wildcards.sample, "BAM"]
+
+pbsv_dict = {"sv": "DEL,INS,INV", "dup": "DUP", "bnd": "BND"}
+
+def find_svtype(wildcards):
+    return pbsv_dict[wildcards.svtype]
+
+
+wildcard_constraints:
+    sample="|".join(manifest_df.index),
+    software="sniffles|cutesv|pbsv",
+    
+
+localrules:
+    all,
+
+
+rule all:
+    input:
+        expand(
+            "results/{sample}/sniffles/{sniffles_ver}/{sample}.sniffles.vcf.gz",
+            sample=manifest_df.index,
+            sniffles_ver=SNIFFLES_VERSION
+        ),
+        expand(
+            "results/{sample}/sniffles/{sniffles_ver}/{sample}.sniffles.vcf.gz.tbi",
+            sample=manifest_df.index,
+            sniffles_ver=SNIFFLES_VERSION
+        ),
+        expand(
+            "results/{sample}/cutesv/{cutesv_ver}/{sample}.cutesv.vcf.gz",
+            sample=manifest_df.index,
+            cutesv_ver=CUTESV_VERSION
+        ),
+        expand(
+            "results/{sample}/cutesv/{cutesv_ver}/{sample}.cutesv.vcf.gz.tbi",
+            sample=manifest_df.index,
+            cutesv_ver=CUTESV_VERSION
+        ),
+        expand(
+            "results/{sample}/pbsv/{pbsv_ver}/{sample}.{svtype}.vcf.gz",
+            sample=manifest_df.index,
+            pbsv_ver=PBSV_VERSION,
+            svtype=pbsv_dict,
+        ),
+
+rule sniffles_all:
+    input:
+        expand(
+            "results/{sample}/sniffles/{sniffles_ver}/{sample}.sniffles.vcf.gz",
+            sample=manifest_df.index,
+            sniffles_ver=SNIFFLES_VERSION
+        ),
+        expand(
+            "results/{sample}/sniffles/{sniffles_ver}/{sample}.sniffles.vcf.gz.tbi",
+            sample=manifest_df.index,
+            sniffles_ver=SNIFFLES_VERSION
+        ),
+
+rule cutesv_all: 
+    input: 
+        expand(
+            "results/{sample}/cutesv/{cutesv_ver}/{sample}.cutesv.vcf.gz",
+            sample=manifest_df.index,
+            cutesv_ver=CUTESV_VERSION
+        ),
+        expand(
+            "results/{sample}/cutesv/{cutesv_ver}/{sample}.cutesv.vcf.gz.tbi",
+            sample=manifest_df.index,
+            cutesv_ver=CUTESV_VERSION
+        ),
+
+rule pbsv_all:
+    input: 
+        expand(
+            "results/{sample}/pbsv/{pbsv_ver}/{sample}.{svtype}.vcf.gz",
+            sample=manifest_df.index,
+            pbsv_ver=PBSV_VERSION,
+            svtype=pbsv_dict,
+        ),
+
+
+
+rule sniffles:
+    input: 
+        bam=get_bam,
+    output: 
+        vcf="results/{sample}/sniffles/{sniffles_ver}/{sample}.sniffles.vcf",
+    threads: NTHREADS,
+    resources:
+        mem=lambda wildcards, attempt: attempt * 16,
+        hrs=24,
+    singularity:
+        f"docker://eichlerlab/sniffles:{SNIFFLES_VERSION}",
+    shell:
+        """
+        mkdir -p results/{wildcards.sample}/sniffles/{wildcards.sniffles_ver}/
+        sniffles -i {input.bam} --tandem-repeats {ANNOTATIONS_TR} --threads {threads} --reference {REF} -v {output.vcf}
+        """
+
+rule cutesv:
+    input: 
+        bam=get_bam,
+    output: 
+        vcf="results/{sample}/cutesv/{cutesv_ver}/{sample}.cutesv.vcf",
+    threads: NTHREADS,
+    resources:
+        mem=lambda wildcards, attempt: attempt * 16,
+        hrs=24,
+    singularity:
+        f"docker://eichlerlab/cutesv:{CUTESV_VERSION}",
+    shell:
+        """
+        mkdir -p results/{wildcards.sample}/cutesv/{wildcards.cutesv_ver}/
+        cuteSV --threads {threads} {input.bam} {REF} {output.vcf} results/{wildcards.sample}/cutesv/{wildcards.cutesv_ver}/
+        """
+
+rule pbsv_svsig:
+    input:
+        bam=get_bam,
+        trf=TRF_REGIONS,
+    output:
+        svsig="results/{sample}/pbsv/{pbsv_ver}/{sample}.pbsv.svsig.gz",
+    singularity:
+        f"docker://eichlerlab/pbsv:{PBSV_VERSION}"
+    threads: 1
+    resources:
+        mem=lambda wildcards, attempt: attempt * 16,
+        hrs=24,
+    shell:
+        """
+        mkdir -p results/{wildcards.sample}/pbsv/{wildcards.pbsv_ver}/
+        pbsv discover --tandem-repeats {input.trf} {input.bam} {output.svsig}
+        """
+
+rule pbsv_call:
+    input:
+        svsig=rules.pbsv_svsig.output.svsig,
+    output:
+        vcf="results/{sample}/pbsv/{pbsv_ver}/{sample}.{svtype}.vcf",
+    singularity:
+        f"docker://eichlerlab/pbsv:{PBSV_VERSION}"
+    threads: 4
+    params:
+        vcf_out=find_svtype,
+    resources:
+        mem=lambda wildcards, attempt: attempt * 32,
+        hrs=24,
+    shell:
+        """
+        pbsv call -j {threads} --ccs --types {params.vcf_out} {REF} {input.svsig} {output.vcf}
+        """
+
+
+        
+rule compress:
+    input: 
+        vcf="results/{sample}/{software}/{version}/{sample}.{tag}.vcf",
+    output: 
+        vcf="results/{sample}/{software}/{version}/{sample}.{tag}.vcf.gz",
+        index="results/{sample}/{software}/{version}/{sample}.{tag}.vcf.gz.tbi",
+    threads: 2,
+    resources:
+        mem=lambda wildcards, attempt: attempt * 16,
+        hrs=24,
+    singularity:
+        "docker://eichlerlab/binf-basics:0.1",
+    shell:
+        """
+        echo "results/{wildcards.sample}/{wildcards.software}/{wildcards.version}/{wildcards.sample}.{wildcards.tag}.vcf.gz"
+        echo "results/{wildcards.sample}/{wildcards.software}/{wildcards.version}/{wildcards.sample}.{wildcards.tag}.vcf.gz.tbi"
+        bgzip -@ {threads} {input.vcf}
+        tabix -p vcf {output.vcf}
+        """
