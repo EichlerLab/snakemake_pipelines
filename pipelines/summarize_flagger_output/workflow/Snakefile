@@ -89,12 +89,8 @@ rule liftover_coords:
     output:
         paf="results/converted_paf/{sample}.paf",
     threads: 1
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "rustybam/0.1.27",
+    singularity:
+         "docker://eichlerlab/rustybam:0.1.33"
     resources:
         mem=128,
         hrs=2,
@@ -112,12 +108,8 @@ rule liftover_bed:
     output:
         bed="results/converted_bed/{sample}.bed",
     threads: 1
-    envmodules:
-        "modules",
-        "modules-init",
-        "modules-gs/prod",
-        "modules-eichler/prod",
-        "rustybam/0.1.27",
+    singularity:
+         "docker://eichlerlab/rustybam:0.1.33"
     resources:
         mem=128,
         hrs=2,
@@ -149,6 +141,8 @@ rule make_ideogram:
     output:
         png="results/plots/{subgroup}/{flag}-filt{filt}.png",
         svg="results/plots/{subgroup}/{flag}-filt{filt}.svg",
+    singularity:
+        "docker://eichlerlab/ideoplot:0.1"
     threads: 1
     resources:
         mem=12,
