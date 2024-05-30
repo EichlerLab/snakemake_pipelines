@@ -115,6 +115,7 @@ rule liftover_coords:
     shell:
         """
         liftOver <(cut -f 1-4 {input.flagger_bed} | tail -n +2 ) {input.chain_file} {output.new_bed} {output.unmapped_bed} 
+        rustybam liftover -b  -q {input.paf} > {output.paf}
         awk '{{s+=$3-$2;}} END {{print "Total Flagger bases before liftover: " s}}' {input.flagger_bed}
         awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.new_bed}
         awk '{{s+=$9-$8;}} END {{print "Unmapped bases after liftover: " s}}' {output.unmapped_bed}
@@ -123,7 +124,7 @@ rule liftover_coords:
 
 rule liftover_bed:
     input:
-        paf=rules.liftover_coords.output.new_bed,
+        paf=rules.liftover_coords.output.paf,
     output:
         bed="results/converted_bed/{sample}.bed",
     threads: 1
