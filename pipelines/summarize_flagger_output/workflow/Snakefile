@@ -104,8 +104,7 @@ rule liftover_coords:
         chain_file=rules.make_chain_for_liftover.output.chain_file,
         flagger_bed=find_flagger_bed,
     output:
-        new_bed="results/converted_paf/{sample}.bed",
-        unmapped_bed="results/converted_paf/{sample}_unmapped.bed",
+        paf="results/converted_paf/{sample}.bed",
     threads: 1
     singularity:
          "docker://eichlerlab/ucsc:202405"
