@@ -40,10 +40,10 @@ def find_per_sample_flagger_summaries(wildcards):
 
 def find_converted_pafs(wildcards):
     if wildcards.subgroup == "all":
-        return expand(rules.liftover_coords.output.new_bed, sample=manifest_df.index)
+        return expand(rules.liftover_coords.output.paf, sample=manifest_df.index)
     else:
         return expand(
-            rules.liftover_coords.output.new_bed,
+            rules.liftover_coords.output.paf,
             sample=[x for x in SUBGROUP_DICT[wildcards.subgroup]],
         )
 
