@@ -82,23 +82,42 @@ rule all:
         expand("results/converted_bed/{sample}.bed", sample=manifest_df.index),
 
 
-rule liftover_coords:
+
+rule make_chain_for_liftover:
     input:
         paf=find_paf,
-        flagger_bed=find_flagger_bed,
     output:
-        paf="results/converted_paf/{sample}.paf",
+        chain_file="temp/chain/{sample}.chain"
     threads: 1
     singularity:
-         "docker://eichlerlab/rustybam:0.1.33"
+        "docker://eichlerlab/paf2chain:0.1.1"
     resources:
         mem=128,
         hrs=2,
     shell:
         """
-        rustybam liftover -b <(cut -f 1-4 {input.flagger_bed}| tail -n +2) -q {input.paf} > {output.paf}
+        paf2chain -i {input.paf} > {output.chain_file}
+        """
+
+rule liftover_coords:
+    input:
+        chain_file=rules.make_chain_for_liftover.output.chain_file,
+        flagger_bed=find_flagger_bed,
+    output:
+        paf="results/converted_paf/{sample}.bed",
+    threads: 1
+    singularity:
+         "docker://eichlerlab/ucsc:202405"
+    resources:
+        mem=128,
+        hrs=2,
+    shell:
+        """
+        liftOver <(cut -f 1-4 {input.flagger_bed} | tail -n +2 ) {input.chain_file} {output.new_bed} {output.unmapped_bed} 
+        rustybam liftover -b  -q {input.paf} > {output.paf}
         awk '{{s+=$3-$2;}} END {{print "Total Flagger bases before liftover: " s}}' {input.flagger_bed}
-        awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.paf}
+        awk '{{s+=$9-$8;}} END {{print "Total bases after liftover: " s}}' {output.new_bed}
+        awk '{{s+=$9-$8;}} END {{print "Unmapped bases after liftover: " s}}' {output.unmapped_bed}
         """
 
 
