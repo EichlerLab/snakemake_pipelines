@@ -90,9 +90,9 @@ rule liftover_coords:
         paf="results/converted_paf/{sample}.paf",
     threads: 1
     singularity:
-         "docker://eichlerlab/rustybam:0.1.33"
+        "docker://eichlerlab/rustybam:0.1.24"
     resources:
-        mem=128,
+        mem=256,
         hrs=2,
     shell:
         """
@@ -109,7 +109,7 @@ rule liftover_bed:
         bed="results/converted_bed/{sample}.bed",
     threads: 1
     singularity:
-         "docker://eichlerlab/rustybam:0.1.33"
+        "docker://eichlerlab/rustybam:0.1.24"
     resources:
         mem=128,
         hrs=2,
