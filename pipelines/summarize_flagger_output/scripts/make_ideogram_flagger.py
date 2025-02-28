@@ -514,6 +514,7 @@ for infile in infiles:
         all_samples_df = pd.concat([all_samples_df, asm_df])
 
 print(f"Making plot for Flagger category {flagger_category}")
+# If SAMPLE not in all_samples_df, converted_paf may be empty
 samples = sorted(all_samples_df["SAMPLE"].unique())
 ideo_hist = ideo_hist(
     all_samples_df,
