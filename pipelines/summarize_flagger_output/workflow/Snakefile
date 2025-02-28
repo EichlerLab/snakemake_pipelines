@@ -5,7 +5,7 @@ configfile: "config/config.yaml"
 
 
 MANIFEST = config.get("manifest", "config/manifest.tab")
-REFERENCE = config["reference"]
+REFERENCE = config.get("reference", None)
 FLAGGER_FLAGS = config.get("flagger_flags", ["Col", "Err", "Dup", "Unk", "Hap"])
 FLAGGER_FLAGS.append("all")
 FLAGGER_FLAGS.append("nohap")
@@ -81,6 +81,19 @@ rule all:
         ),
         expand("results/converted_bed/{sample}.bed", sample=manifest_df.index),
 
+rule all_noref:
+    input:
+        "results/flagger_summary/flagger_summary.tsv",
+        expand(
+            "results/flagger_summary/asm_bar_chart_{subgroup}-filt{filt}.png",
+            subgroup=SUBGROUP_DICT,
+            filt=FLAGGER_LEN_FILTER,
+        ),
+        expand(
+            "results/flagger_summary/asm_bar_chart_nohap_{subgroup}-filt{filt}.png",
+            subgroup=SUBGROUP_DICT,
+            filt=FLAGGER_LEN_FILTER,
+        )
 
 rule liftover_coords:
     input:
@@ -90,9 +103,9 @@ rule liftover_coords:
         paf="results/converted_paf/{sample}.paf",
     threads: 1
     singularity:
-         "docker://eichlerlab/rustybam:0.1.33"
+        "docker://eichlerlab/rustybam:0.1.24"
     resources:
-        mem=128,
+        mem=256,
         hrs=2,
     shell:
         """
@@ -109,7 +122,7 @@ rule liftover_bed:
         bed="results/converted_bed/{sample}.bed",
     threads: 1
     singularity:
-         "docker://eichlerlab/rustybam:0.1.33"
+        "docker://eichlerlab/rustybam:0.1.24"
     resources:
         mem=128,
         hrs=2,
@@ -122,7 +135,7 @@ rule liftover_bed:
 # Coordinate windows for make_ideogram binning
 rule make_windows_bed:
     input:
-        fai=config["ref_files"][REFERENCE]["fai"],
+        fai=config["ref_files"][REFERENCE]["fai"] if REFERENCE else "NA",
     output:
         bed="temp/windows.bed",
     threads: 1
@@ -205,3 +218,4 @@ rule combine_summaries:
         out_df = pd.concat(sample_dfs)
 
         out_df.to_csv(output.tsv, sep="\t", index=False)
+
